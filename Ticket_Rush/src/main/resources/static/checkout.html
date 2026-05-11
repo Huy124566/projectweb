@@ -1,0 +1,418 @@
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+	    <meta charset="UTF-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <title>TicketMaster - Checkout</title>
+	    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+	    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+	    <style>
+	        * { margin: 0; padding: 0; box-sizing: border-box; }
+	        body { font-family: 'Inter', sans-serif; background: #f5f7fa; }
+	        
+	        .header { background: #0d5bd7; padding: 14px 40px; display: flex; justify-content: space-between; align-items: center; }
+	        .logo { font-size: 1.5rem; font-weight: 700; color: white; text-decoration: none; cursor: pointer; }
+	        .logo i { margin-right: 6px; }
+	        
+	        .checkout-container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+	        .checkout-card { background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 35px rgba(0,0,0,0.1); }
+	        .card-header { background: #0d5bd7; color: white; padding: 20px 30px; }
+	        .card-body { padding: 30px; }
+	        .seat-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eef2f6; }
+	        .total-row { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 2px solid #eef2f6; }
+	        .btn-confirm { background: #0d5bd7; color: white; border: none; padding: 14px 28px; border-radius: 50px; font-weight: 700; width: 100%; margin-top: 20px; }
+	        .btn-confirm:hover { background: #0a4ab3; }
+	        .btn-back { background: #f1f5f9; color: #1a2a3a; border: none; padding: 14px 28px; border-radius: 50px; font-weight: 600; width: 100%; margin-top: 10px; }
+	        .timer { background: #fef3c7; padding: 15px; text-align: center; border-radius: 16px; margin-bottom: 20px; }
+	        .timer-value { font-size: 48px; font-weight: 800; color: #d97706; font-family: monospace; }
+	        .toast-notification { position: fixed; bottom: 30px; right: 30px; background: #0d5bd7; color: white; padding: 12px 24px; border-radius: 50px; z-index: 2000; animation: slideIn 0.3s; }
+	        @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+	    </style>
+	</head>
+	<body>
+	
+	<div class="header">
+	    <div class="logo" onclick="window.location.href='index.html'">
+	        <i class="fas fa-ticket-alt"></i> ticketmaster
+	    </div>
+	    <div id="auth-area"></div>
+	</div>
+	
+	<div class="checkout-container">
+	    <div class="checkout-card">
+	        <div class="card-header">
+	            <h3><i class="fas fa-shopping-cart me-2"></i> Checkout</h3>
+	        </div>
+	        <div class="card-body">
+	            <div class="timer" id="timerBox">
+	                <div class="timer-value" id="timerDisplay">05:00</div>
+	                <div>Time remaining to complete payment</div>
+	            </div>
+	            
+	            <h5>Order Summary</h5>
+	            <div id="orderItems"></div>
+	            
+	            <div class="total-row">
+	                <span><strong>Subtotal:</strong></span>
+	                <span id="subtotal">$0</span>
+	            </div>
+	            <div class="total-row">
+	                <span><strong>Service Fee (10%):</strong></span>
+	                <span id="serviceFee">$0</span>
+	            </div>
+	            <div class="total-row" style="border-top: 2px solid #0d5bd7;">
+	                <span><strong>Total:</strong></span>
+	                <span id="totalAmount"><strong>$0</strong></span>
+	            </div>
+	            
+	            <button class="btn-confirm" id="confirmBtn" onclick="confirmPayment()">
+	                <i class="fas fa-credit-card me-2"></i> Confirm Payment
+	            </button>
+	            <button class="btn-back" onclick="goBack()">
+	                <i class="fas fa-arrow-left me-2"></i> Back to Seats
+	            </button>
+	        </div>
+	    </div>
+	</div>
+	
+	<script>
+	const API_BASE = "http://localhost:8082";
+	let currentUser = null;
+	let cart = [];
+	let timeLeft = 300;           // 5 phút
+	let countdownInterval = null;
+	let eventId = null;
+	
+	// ==================== UTILITIES ====================
+	function getEventId() {
+	    if (!eventId) {
+	        eventId = new URLSearchParams(window.location.search).get("eventId");
+	    }
+	    return eventId;
+	}
+	
+	function showToast(msg, type = "success") {
+	    const toast = document.createElement("div");
+	    toast.className = "toast-notification";
+	    toast.style.background = type === "error" ? "#dc3545" : "#0d5bd7";
+	    toast.innerHTML = `<i class="fas ${type === "error" ? 'fa-exclamation-triangle' : 'fa-check-circle'} me-2"></i>${msg}`;
+	    document.body.appendChild(toast);
+	    setTimeout(() => toast.remove(), 3000);
+	}
+	
+	function escapeHtml(str) {
+	    if (!str) return '';
+	    return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+	}
+	
+	// ==================== STATE MANAGEMENT ====================
+	function getCheckoutStateKey() {
+	    return `checkout_state_${getEventId()}`;
+	}
+	
+	function persistCheckoutState() {
+	    if (!cart.length) return;
+	    const expiryTimestamp = Date.now() + (timeLeft * 1000);
+	    const state = { cart: cart, expiryTimestamp: expiryTimestamp };
+	    sessionStorage.setItem(getCheckoutStateKey(), JSON.stringify(state));
+	}
+	
+	function restoreCheckoutState() {
+	    const saved = sessionStorage.getItem(getCheckoutStateKey());
+	    if (!saved) return false;
+	
+	    try {
+	        const state = JSON.parse(saved);
+	        const remaining = Math.floor((state.expiryTimestamp - Date.now()) / 1000);
+	
+	        if (remaining > 0 && state.cart?.length > 0) {
+	            cart = state.cart;
+	            timeLeft = Math.min(remaining, 300);
+	            return true;
+	        } else {
+	            sessionStorage.removeItem(getCheckoutStateKey());
+	        }
+	    } catch (e) {
+	        console.error("Restore checkout state error:", e);
+	    }
+	    return false;
+	}
+	
+	function clearAllStorage() {
+	    sessionStorage.removeItem("checkoutCart");
+	    sessionStorage.removeItem(getCheckoutStateKey());
+	}
+	
+	// ==================== TIMER ====================
+	function startCountdown() {
+	    if (countdownInterval) clearInterval(countdownInterval);
+	
+	    countdownInterval = setInterval(() => {
+	        if (timeLeft <= 0) {
+	            clearInterval(countdownInterval);
+	            handleTimeout();
+	            return;
+	        }
+	        timeLeft--;
+	        updateTimerDisplay();
+	        persistCheckoutState();
+	        
+	        if (timeLeft <= 60) {
+	            document.getElementById("timerBox").style.background = "#fed7aa";
+	        }
+	    }, 1000);
+	}
+	
+	function updateTimerDisplay() {
+	    const minutes = Math.floor(timeLeft / 60);
+	    const seconds = timeLeft % 60;
+	    const timerDisplay = document.getElementById("timerDisplay");
+	    if (timerDisplay) {
+	        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+	    }
+	}
+	
+	function handleTimeout() {
+	    showToast("⏰ Time expired! Your seats have been released.", "error");
+	    clearAllStorage();
+	    setTimeout(() => {
+	        window.location.href = `seats.html?eventId=${getEventId()}`;
+	    }, 2000);
+	}
+	
+	// ==================== ORDER SUMMARY ====================
+	function updateOrderSummary() {
+	    let subtotal = 0;
+	    let html = '';
+	
+	    cart.forEach(seat => {
+	        const row = seat.rowIndex || seat.row;
+	        const col = seat.colIndex || seat.col;
+	        const seatLabel = `${String.fromCharCode(64 + row)}${col}`;
+	        const price = seat.price || 50;
+	        subtotal += price;
+	
+	        html += `
+	            <div class="seat-item">
+	                <span>🎫 Seat ${seatLabel}</span>
+	                <span>$${price}</span>
+	            </div>`;
+	    });
+	
+	    const serviceFee = subtotal * 0.1;
+	    const total = subtotal + serviceFee;
+	
+	    document.getElementById("orderItems").innerHTML = html;
+	    document.getElementById("subtotal").innerText = `$${subtotal.toFixed(2)}`;
+	    document.getElementById("serviceFee").innerText = `$${serviceFee.toFixed(2)}`;
+	    document.getElementById("totalAmount").innerText = `$${total.toFixed(2)}`;
+	}
+	
+	// ==================== SYNC WITH SERVER ====================
+	
+	
+	// ==================== AUTH & LOAD ====================
+	function loadCurrentUser() {
+	    const userStr = localStorage.getItem("user");
+	    currentUser = userStr ? JSON.parse(userStr) : null;
+	
+	    const area = document.getElementById("auth-area");
+	    if (currentUser) {
+	        area.innerHTML = `<span><i class="fas fa-user-circle"></i> ${currentUser.username}</span>`;
+	    } else {
+	        area.innerHTML = `<a href="login.html" style="color:white;">Sign In</a>`;
+	    }
+	}
+	async function syncAndLockAllSeats() {
+	    if (!cart.length) return true;
+	
+	    console.log("Syncing and locking seats...");
+	    let minRemaining = 300;
+	    const seatsToLock = [];
+	
+	    for (const seat of cart) {
+	        try {
+	            const res = await fetch(`${API_BASE}/seats/${getEventId()}`);
+	            const allSeats = await res.json();
+	            const currentSeat = allSeats.find(s => s.id === seat.id);
+	            
+	            if (!currentSeat) {
+	                throw new Error(`Seat not found`);
+	            }
+	            
+	            if (currentSeat.status === "SOLD") {
+	                throw new Error(`Seat ${seat.seatCode} is already sold!`);
+	            }
+	            
+	            // Nếu ghế đã LOCKED bởi chính user này
+	            if (currentSeat.status === "LOCKED" && 
+	                currentSeat.lockedBy && 
+	                currentSeat.lockedBy.id === currentUser.id) {
+	                if (currentSeat.lockedUntil) {
+	                    const remaining = Math.floor((new Date(currentSeat.lockedUntil) - Date.now()) / 1000);
+	                    if (remaining > 0 && remaining < minRemaining) {
+	                        minRemaining = remaining;
+	                    }
+	                    seat.lockedUntil = currentSeat.lockedUntil;
+	                }
+	                continue;
+	            }
+	            
+	            // Nếu ghế bị người khác lock
+	            if (currentSeat.status === "LOCKED") {
+	                throw new Error(`Seat ${seat.seatCode} is locked by another user`);
+	            }
+	            
+	            // Ghế cần lock
+	            seatsToLock.push(seat);
+	            
+	        } catch (e) {
+	            showToast(e.message, "error");
+	            return false;
+	        }
+	    }
+	    
+	    // Lock các ghế chưa lock
+	    for (const seat of seatsToLock) {
+	        try {
+	            const lockRes = await fetch(`${API_BASE}/seats/lock`, {
+	                method: "POST",
+	                headers: { "Content-Type": "application/json" },
+	                body: JSON.stringify({ seatId: seat.id, userId: currentUser.id })
+	            });
+	            
+	            if (!lockRes.ok) {
+	                const error = await lockRes.text();
+	                throw new Error(error);
+	            }
+	            
+	            const lockedSeat = await lockRes.json();
+	            seat.lockedUntil = lockedSeat.lockedUntil;
+	            
+	            if (lockedSeat.lockedUntil) {
+	                const remaining = Math.floor((new Date(lockedSeat.lockedUntil) - Date.now()) / 1000);
+	                if (remaining > 0 && remaining < minRemaining) {
+	                    minRemaining = remaining;
+	                }
+	            }
+	        } catch (e) {
+	            showToast(e.message, "error");
+	            return false;
+	        }
+	    }
+	    
+	    // Cập nhật thời gian
+	    if (minRemaining < timeLeft) {
+	        timeLeft = minRemaining;
+	        updateTimerDisplay();
+	    }
+	    
+	    console.log(`All seats locked, time left: ${timeLeft}s`);
+	    persistCheckoutState();
+	    return true;
+	}
+	async function loadCart() {
+	    const eventId = getEventId();
+	    if (!eventId) {
+	        alert("No event found!");
+	        window.location.href = "index.html";
+	        return;
+	    }
+	    
+	    // 1. Thử khôi phục từ checkout state
+	    if (restoreCheckoutState()) {
+	        updateOrderSummary();
+	        startCountdown();
+	        return;
+	    }
+	
+	    // 2. Lấy từ checkoutCart (trang seat chuyển sang)
+	    const cartData = sessionStorage.getItem("checkoutCart");
+	    if (!cartData) {
+	        alert("No cart found!");
+	        window.location.href = `seats.html?eventId=${eventId}`;
+	        return;
+	    }
+	
+	    cart = JSON.parse(cartData);
+	    if (cart.length === 0) {
+	        window.location.href = `seats.html?eventId=${eventId}`;
+	        return;
+	    }
+	
+	    updateOrderSummary();
+	    
+	    // 3. Sync và lock ghế (nếu cần)
+	    const success = await syncAndLockAllSeats();
+	    if (!success) {
+	        window.location.href = `seats.html?eventId=${eventId}`;
+	        return;
+	    }
+	    
+	    startCountdown();
+	}
+	
+	// ==================== PAYMENT ====================
+	async function confirmPayment() {
+    if (!currentUser) {
+        showToast("Please login to continue!", "error");
+        setTimeout(() => window.location.href = "login.html", 1500);
+        return;
+    }
+
+    const btn = document.getElementById("confirmBtn");
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+
+    try {
+        for (const seat of cart) {
+            const response = await fetch(`${API_BASE}/seats/checkout?seatId=${seat.id}&userId=${currentUser.id}`, {
+                method: "POST"
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(`Failed to book seat: ${error}`);
+            }
+        }
+
+        // Thành công
+        clearAllStorage();
+        clearInterval(countdownInterval);
+        
+        // 🔥 THÊM DÒNG NÀY ĐỂ BÁO CHO SEATS.HTML XÓA CART
+        sessionStorage.setItem("payment_success", "true");
+        
+        showToast("✅ Payment successful! Tickets have been booked.", "success");
+
+        setTimeout(() => {
+            window.location.href = "my-tickets.html";
+        }, 2000);
+
+    } catch (error) {
+        console.error("Payment error:", error);
+        showToast(error.message || "Payment failed!", "error");
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+	
+	function goBack() {
+	    if (confirm("Go back? Your seat reservation will remain active.")) {
+	        window.location.href = `seats.html?eventId=${getEventId()}`;
+	    }
+	}
+	
+	// ==================== INIT ====================
+	window.addEventListener("DOMContentLoaded", () => {
+	    loadCurrentUser();
+	    loadCart();
+	});
+	
+	window.addEventListener("beforeunload", () => {
+	    if (countdownInterval) clearInterval(countdownInterval);
+	});
+	</script>
+	</body>
+	</html>

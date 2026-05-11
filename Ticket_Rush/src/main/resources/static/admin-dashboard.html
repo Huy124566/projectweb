@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - TicketRush</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f8; }
+
+        .sidebar { width: 280px; background: linear-gradient(180deg, #0a2a4a 0%, #0a4ab3 100%); height: 100vh; position: fixed; left: 0; top: 0; color: white; z-index: 100; overflow-y: auto; }
+        .sidebar .logo { padding: 25px 24px; border-bottom: 1px solid rgba(255,255,255,0.12); }
+        .sidebar .logo i { font-size: 28px; margin-right: 12px; }
+        .sidebar .logo span { font-size: 20px; font-weight: 700; }
+        .sidebar .nav-item { padding: 14px 24px; margin: 4px 12px; cursor: pointer; display: flex; align-items: center; gap: 14px; border-radius: 12px; transition: 0.2s; }
+        .sidebar .nav-item:hover { background: rgba(255,255,255,0.12); transform: translateX(4px); }
+        .sidebar .nav-item.active { background: rgba(255,255,255,0.2); border-left: 3px solid white; }
+        .sidebar .nav-item i { width: 24px; }
+
+        .main-content { margin-left: 280px; padding: 24px 32px; }
+        .top-bar { background: white; border-radius: 20px; padding: 16px 28px; margin-bottom: 28px; display: flex; justify-content: space-between; align-items: center; }
+        .admin-avatar { width: 40px; height: 40px; border-radius: 50%; background: #0d5bd7; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+
+        .stat-card { background: white; border-radius: 24px; padding: 22px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); transition: 0.3s; cursor: pointer; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(13,91,215,0.12); }
+        .stat-icon { width: 56px; height: 56px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; background: #eef2ff; color: #0d5bd7; }
+        .stat-value { font-size: 32px; font-weight: 800; color: #1a2a3a; }
+        .stat-label { font-size: 14px; color: #6c7a8a; }
+
+        .chart-container { background: white; border-radius: 24px; padding: 20px; margin-bottom: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+        .chart-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .chart-title i { color: #0d5bd7; }
+
+        .event-table { background: white; border-radius: 24px; padding: 20px; }
+        .table thead th { background: #f8f9fc; border-bottom: 2px solid #eef2f6; font-size: 13px; text-transform: uppercase; }
+        .btn-primary-custom { background: #0d5bd7; color: white; border: none; padding: 10px 24px; border-radius: 50px; font-weight: 600; }
+        .btn-primary-custom:hover { background: #0a4ab3; transform: translateY(-2px); }
+        .btn-edit { background: #fef3c7; color: #d97706; border: none; padding: 6px 14px; border-radius: 40px; margin: 0 4px; }
+        .btn-delete { background: #fee2e2; color: #dc2626; border: none; padding: 6px 14px; border-radius: 40px; }
+
+        .seat-grid { background: #f8f9fc; border-radius: 20px; padding: 20px; margin-top: 20px; overflow-x: auto; }
+        .seat-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
+        .seat-row-label { min-width: 45px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; background: #eef2ff; border-radius: 12px; margin-right: 10px; padding: 0 10px; }
+        .seat { width: 70px; height: 70px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; cursor: pointer; position: relative; transition: 0.2s; }
+        .seat.available { background: #e0e7ff; border: 2px solid #0d5bd7; color: #0d5bd7; }
+        .seat.vip { background: #fde68a; border: 2px solid #d97706; color: #92400e; }
+        .seat.locked { background: #fed7aa; border: 2px solid #ea580c; color: #9a3412; }
+        .seat.locked::after { content: "\f023"; font-family: "Font Awesome 6 Free"; font-weight: 900; position: absolute; top: 4px; right: 6px; font-size: 12px; }
+        .seat.sold { background: #dcfce7; border: 2px solid #16a34a; color: #16a34a; }
+        .seat:hover { transform: scale(1.03); }
+
+        .toast-notification { position: fixed; bottom: 30px; right: 30px; background: #0d5bd7; color: white; padding: 12px 24px; border-radius: 50px; z-index: 2000; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+
+        @media (max-width: 992px) { .sidebar { width: 80px; } .sidebar .logo span, .sidebar .nav-item span { display: none; } .main-content { margin-left: 80px; } }
+        @media (max-width: 768px) { .main-content { padding: 16px; } .seat { width: 55px; height: 55px; font-size: 10px; } }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="logo"><i class="fas fa-crown"></i><span>TicketRush</span></div>
+    <div class="nav-item active" onclick="showSection('dashboard')"><i class="fas fa-chart-line"></i><span>Dashboard</span></div>
+    <div class="nav-item" onclick="showSection('events')"><i class="fas fa-calendar-alt"></i><span>Manage Events</span></div>
+    <div class="nav-item" onclick="showSection('create-event')"><i class="fas fa-plus-circle"></i><span>Create Event</span></div>
+    <div class="nav-item" onclick="showSection('seat-config')"><i class="fas fa-chair"></i><span>Seat Config</span></div>
+    <div class="nav-item" onclick="showSection('analytics')"><i class="fas fa-chart-pie"></i><span>Demographics</span></div>
+    <div class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></div>
+</div>
+
+<div class="main-content">
+    <div class="top-bar">
+        <h4><i class="fas fa-tachometer-alt me-2" style="color:#0d5bd7;"></i>Admin Dashboard</h4>
+        <div class="admin-avatar" id="adminAvatar">A</div>
+    </div>
+
+    <div id="dashboardSection">
+        <div class="row g-4 mb-4">
+            <div class="col-md-3"><div class="stat-card"><div class="stat-icon"><i class="fas fa-ticket-alt"></i></div><div class="stat-value" id="totalSold">0</div><div class="stat-label">Tickets Sold</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><div class="stat-icon"><i class="fas fa-dollar-sign"></i></div><div class="stat-value" id="totalRevenue">$0</div><div class="stat-label">Revenue</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-line"></i></div><div class="stat-value" id="occupancyRate">0%</div><div class="stat-label">Occupancy</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-value" id="totalUsers">0</div><div class="stat-label">Users</div></div></div>
+        </div>
+        <div class="row">
+            <div class="col-lg-7"><div class="chart-container"><div class="chart-title"><i class="fas fa-chart-line"></i> Revenue Trend</div><canvas id="revenueChart" height="250"></canvas></div></div>
+            <div class="col-lg-5"><div class="chart-container"><div class="chart-title"><i class="fas fa-chart-pie"></i> Seat Status</div><canvas id="seatStatusChart" height="250"></canvas></div></div>
+        </div>
+    </div>
+
+    <div id="eventsSection" style="display:none;">
+        <div class="event-table">
+            <div class="d-flex justify-content-between mb-4"><h5>All Events</h5><button class="btn-primary-custom" onclick="showSection('create-event')">+ New Event</button></div>
+            <div class="table-responsive"><table class="table table-hover"><thead><tr><th>ID</th><th>Name</th><th>Location</th><th>Date</th><th>Sold/Total</th><th>Revenue</th><th>Actions</th><tr></thead><tbody id="eventsTableBody"><tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div> Loading...</td></tr></tbody></table></div>
+        </div>
+    </div>
+
+    <div id="createEventSection" style="display:none;">
+        <div class="event-table">
+            <h5>Create Event</h5>
+            <div class="row mt-3">
+                <div class="col-md-6 mb-3"><label>Event Name *</label><input type="text" id="eventName" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label>Location *</label><input type="text" id="eventLocation" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label>Date & Time *</label><input type="datetime-local" id="eventDateTime" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label>Category</label><select id="eventCategory" class="form-select"><option>CONCERT</option><option>SPORTS</option><option>THEATRE</option><option>FAMILY</option><option>COMEDY</option></select></div>
+                <div class="col-12 mb-3"><label>Description</label><textarea id="eventDescription" class="form-control" rows="3"></textarea></div>
+                <div class="col-md-6 mb-3"><label>Image URL</label><input type="text" id="eventImage" class="form-control" placeholder="https://..."></div>
+                <div class="col-md-6 mb-3"><label>Min Price ($)</label><input type="number" id="eventMinPrice" class="form-control" value="50"></div>
+                <div class="col-12"><button class="btn-primary-custom" onclick="createNewEvent()"><i class="fas fa-save me-2"></i> Create Event</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="seatConfigSection" style="display:none;">
+        <div class="event-table">
+            <h5>Seat Map Configuration</h5>
+            <div class="row"><div class="col-md-6 mb-3"><label>Select Event</label><select id="seatEventSelect" class="form-select"></select></div></div>
+            <div class="row bg-light p-3 rounded-3 mb-3">
+                <div class="col-md-3 mb-2"><label>Rows (A-Z)</label><input type="number" id="seatRows" class="form-control" value="8" min="1" max="26"></div>
+                <div class="col-md-3 mb-2"><label>Columns</label><input type="number" id="seatCols" class="form-control" value="10" min="1" max="20"></div>
+                <div class="col-md-3 mb-2"><label>Default Price ($)</label><input type="number" id="defaultPrice" class="form-control" value="50" step="5"></div>
+                <div class="col-md-3 mb-2"><label>VIP Rows (from top)</label><input type="number" id="vipRows" class="form-control" value="2" min="0"></div>
+                <div class="col-12 mt-3"><button class="btn-primary-custom" onclick="generateSeats()">Generate Seats</button></div>
+            </div>
+            <div id="seatMap" class="seat-grid">Select an event to view seat map</div>
+        </div>
+    </div>
+
+    <div id="analyticsSection" style="display:none;">
+        <div class="row">
+            <div class="col-lg-6"><div class="chart-container"><div class="chart-title"><i class="fas fa-venus-mars"></i> Gender</div><canvas id="genderChart" height="300"></canvas></div></div>
+            <div class="col-lg-6"><div class="chart-container"><div class="chart-title"><i class="fas fa-calendar-alt"></i> Age Group</div><canvas id="ageChart" height="300"></canvas></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Event Modal -->
+<div class="modal fade" id="editEventModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5>Edit Event</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="editEventId">
+                <div class="mb-3"><label>Name</label><input type="text" id="editEventName" class="form-control"></div>
+                <div class="mb-3"><label>Location</label><input type="text" id="editEventLocation" class="form-control"></div>
+                <div class="mb-3"><label>Date & Time</label><input type="datetime-local" id="editEventDateTime" class="form-control"></div>
+                <div class="mb-3"><label>Category</label><select id="editEventCategory" class="form-select"><option>CONCERT</option><option>SPORTS</option><option>THEATRE</option><option>FAMILY</option></select></div>
+                <div class="mb-3"><label>Description</label><textarea id="editEventDescription" class="form-control" rows="2"></textarea></div>
+                <div class="mb-3"><label>Image URL</label><input type="text" id="editEventImage" class="form-control"></div>
+                <div class="mb-3"><label>Min Price</label><input type="number" id="editEventMinPrice" class="form-control"></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" onclick="updateEvent()">Save</button></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const API_BASE = "http://localhost:8082";
+let eventsList = [];
+let revenueChart, seatStatusChart, genderChart, ageChart;
+let editModalInstance = null;
+
+function showToast(msg) {
+    let t = document.createElement("div");
+    t.className = "toast-notification";
+    t.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+}
+
+// ==================== AUTH CHECK ====================
+function checkAdmin() {
+    const userStr = localStorage.getItem("user");
+    if (!userStr) { window.location.href = "login.html"; return; }
+    let user = JSON.parse(userStr);
+    if (user.role !== "ROLE_ADMIN") { alert("No permission"); window.location.href = "index.html"; return; }
+    document.getElementById("adminAvatar").innerText = user.username.charAt(0).toUpperCase();
+    
+    // Khởi tạo Bootstrap modal instance
+    editModalInstance = new bootstrap.Modal(document.getElementById('editEventModal'));
+
+    loadDashboard();
+    loadEvents();
+    loadEventSelect();
+}
+
+function getAuthHeader() {
+    const token = localStorage.getItem("token") || "";
+    return {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+    };
+}
+
+function logout() { localStorage.removeItem("user"); window.location.href = "login.html"; }
+
+// ==================== SECTION NAVIGATION ====================
+function showSection(section) {
+    const sections = ['dashboardSection', 'eventsSection', 'createEventSection', 'seatConfigSection', 'analyticsSection'];
+    sections.forEach(id => document.getElementById(id).style.display = 'none');
+    
+    let target = section === 'dashboard' ? 'dashboardSection' : 
+                 section === 'events' ? 'eventsSection' : 
+                 section === 'create-event' ? 'createEventSection' : 
+                 section === 'seat-config' ? 'seatConfigSection' : 'analyticsSection';
+                 
+    if (target) document.getElementById(target).style.display = 'block';
+    
+    document.querySelectorAll('.sidebar .nav-item').forEach(item => item.classList.remove('active'));
+    if (event && event.target) {
+        event.target.closest('.nav-item').classList.add('active');
+    }
+
+    if (section === 'dashboard') loadDashboard();
+    else if (section === 'events') loadEvents();
+    else if (section === 'seat-config') { loadEventSelect(); loadSeatConfig(); }
+    else if (section === 'analytics') loadDemographics();
+}
+
+// ==================== DASHBOARD ====================
+async function loadDashboard() {
+    try {
+        const stats = await fetch(`${API_BASE}/admin/stats`).then(r => r.json());
+        document.getElementById("totalSold").innerText = stats.totalSold || 0;
+        document.getElementById("totalRevenue").innerText = `$${(stats.totalRevenue || 0).toLocaleString()}`;
+        document.getElementById("occupancyRate").innerText = `${stats.occupancyRate || 0}%`;
+        document.getElementById("totalUsers").innerText = stats.totalUsers || 0;
+    } catch(e) { console.error(e); }
+    
+    try {
+        const rev = await fetch(`${API_BASE}/admin/revenue/timeline?from=2024-01-01T00:00:00&to=2026-12-31T23:59:59`).then(r => r.json());
+        const labels = rev.dates?.length ? rev.dates : ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+        const data = rev.revenues?.length ? rev.revenues : [0,0,0,0];
+        if (revenueChart) revenueChart.destroy();
+        const ctx = document.getElementById("revenueChart").getContext('2d');
+        revenueChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: labels, datasets: [{ label: 'Revenue ($)', data: data, borderColor: '#0d5bd7', backgroundColor: 'rgba(13,91,215,0.05)', fill: true, tension: 0.4 }] }
+        });
+    } catch(e) { console.error(e); }
+    
+    try {
+        const seatStats = await fetch(`${API_BASE}/admin/seats/stats`).then(r => r.json());
+        if (seatStatusChart) seatStatusChart.destroy();
+        const ctx2 = document.getElementById("seatStatusChart").getContext('2d');
+        seatStatusChart = new Chart(ctx2, {
+            type: 'doughnut',
+            data: { labels: ['Available', 'Locked', 'Sold'], datasets: [{ data: [seatStats.available || 0, seatStats.locked || 0, seatStats.sold || 0], backgroundColor: ['#e0e7ff', '#fef3c7', '#dcfce7'] }] }
+        });
+    } catch(e) { console.error(e); }
+}
+
+// ==================== EVENTS MANAGEMENT ====================
+async function loadEvents() {
+    try {
+        let res = await fetch(`${API_BASE}/admin/events`);
+        eventsList = await res.json();
+        let tbody = document.getElementById("eventsTableBody");
+        tbody.innerHTML = '';
+        for (let e of eventsList) {
+            let stats = await fetch(`${API_BASE}/admin/events/${e.id}/stats`).then(r => r.json()).catch(() => ({}));
+            tbody.innerHTML += `<tr>
+                <td>${e.id}</td>
+                <td><strong>${e.name}</strong></td>
+                <td>${e.location}</td>
+                <td>${new Date(e.eventTime).toLocaleDateString()}</td>
+                <td><span class="badge bg-primary">${stats.soldSeats || 0}/${stats.totalSeats || 0}</span></td>
+                <td>$${(stats.revenue || 0).toLocaleString()}</td>
+                <td><button class="btn-edit" onclick="openEditModal(${e.id})">Edit</button><button class="btn-delete" onclick="deleteEvent(${e.id})">Delete</button></td>
+            </tr>`;
+        }
+    } catch(e) { console.error(e); }
+}
+
+async function createNewEvent() {
+    let event = {
+        name: document.getElementById("eventName").value,
+        location: document.getElementById("eventLocation").value,
+        eventTime: document.getElementById("eventDateTime").value,
+        category: document.getElementById("eventCategory").value,
+        description: document.getElementById("eventDescription").value,
+        imageUrl: document.getElementById("eventImage").value || "https://picsum.photos/300/200",
+        minPrice: parseFloat(document.getElementById("eventMinPrice").value)
+    };
+    if (!event.name || !event.location || !event.eventTime) { alert("Required fields missing"); return; }
+    let res = await fetch(`${API_BASE}/admin/events`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(event) });
+    if (res.ok) { showToast("Event created"); showSection('events'); loadEvents(); }
+    else alert("Create failed");
+}
+
+function openEditModal(id) {
+    let e = eventsList.find(ev => ev.id == id);
+    if (!e) return;
+    document.getElementById("editEventId").value = e.id;
+    document.getElementById("editEventName").value = e.name;
+    document.getElementById("editEventLocation").value = e.location;
+    document.getElementById("editEventDateTime").value = e.eventTime;
+    document.getElementById("editEventCategory").value = e.category;
+    document.getElementById("editEventDescription").value = e.description || "";
+    document.getElementById("editEventImage").value = e.imageUrl || "";
+    document.getElementById("editEventMinPrice").value = e.minPrice || 0;
+    
+    if (editModalInstance) {
+        editModalInstance.show();
+    }
+}
+
+async function updateEvent() {
+    let id = document.getElementById("editEventId").value;
+    let event = {
+        name: document.getElementById("editEventName").value,
+        location: document.getElementById("editEventLocation").value,
+        eventTime: document.getElementById("editEventDateTime").value,
+        category: document.getElementById("editEventCategory").value,
+        description: document.getElementById("editEventDescription").value,
+        imageUrl: document.getElementById("editEventImage").value,
+        minPrice: parseFloat(document.getElementById("editEventMinPrice").value)
+    };
+    let res = await fetch(`${API_BASE}/admin/events/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(event) });
+    if (res.ok) { 
+        showToast("Updated"); 
+        if(editModalInstance) editModalInstance.hide(); 
+        loadEvents(); 
+    }
+}
+
+async function deleteEvent(id) {
+    if (confirm("Delete permanently?")) { 
+        await fetch(`${API_BASE}/admin/events/${id}`, { method: "DELETE" }); 
+        showToast("Deleted"); 
+        loadEvents(); 
+    }
+}
+
+// ==================== SEAT CONFIGURATION ====================
+async function loadEventSelect() {
+    let res = await fetch(`${API_BASE}/admin/events`);
+    let events = await res.json();
+    let select = document.getElementById("seatEventSelect");
+    select.innerHTML = '<option value="">-- Choose Event --</option>';
+    events.forEach(e => select.innerHTML += `<option value="${e.id}">${e.name}</option>`);
+    select.onchange = () => loadSeatConfig();
+}
+
+async function loadSeatConfig() {
+    let eventId = document.getElementById("seatEventSelect").value;
+    if (!eventId) { document.getElementById("seatMap").innerHTML = '<div class="text-center text-muted py-5">Select an event to view seat map</div>'; return; }
+    try {
+        let seats = await fetch(`${API_BASE}/admin/events/${eventId}/seats`).then(r => r.json());
+        if (!seats.length) { document.getElementById("seatMap").innerHTML = '<div class="alert alert-info">No seats generated yet. Use form below to generate.</div>'; return; }
+        let rows = [...new Set(seats.map(s => s.rowIndex))].sort((a,b)=>a-b);
+        let vipRows = parseInt(document.getElementById("vipRows").value) || 0;
+        let html = '<div class="text-center mb-3"><small>🟦 Available | 🟨 VIP | 🟧 Locked | 🟩 Sold</small></div>';
+        rows.forEach(row => {
+            let rowSeats = seats.filter(s => s.rowIndex === row).sort((a,b)=>a.colIndex - b.colIndex);
+            html += `<div class="seat-row">
+                <div class="seat-row-label">${String.fromCharCode(64 + row)}</div>`;
+            rowSeats.forEach(seat => {
+                let cls = 'available';
+                if (seat.status === 'LOCKED') cls = 'locked';
+                else if (seat.status === 'SOLD') cls = 'sold';
+                else if (row <= vipRows) cls = 'vip';
+                html += `<div class="seat ${cls}" onclick="updateSeatPrice(${seat.id})" title="${cls === 'vip' ? 'VIP Seat (Click to edit price)' : 'Regular Seat (Click to edit price)'}">
+                            <span style="font-size:14px; font-weight:bold;">${seat.colIndex}</span><br><small>$${seat.price}</small>
+                        </div>`;
+            });
+            html += `</div>`;
+        });
+        document.getElementById("seatMap").innerHTML = html;
+    } catch(e) { console.error(e); document.getElementById("seatMap").innerHTML = '<div class="alert alert-danger">Error loading seats</div>'; }
+}
+
+async function generateSeats() {
+    let eventId = document.getElementById("seatEventSelect").value;
+    if (!eventId) { alert("Select an event"); return; }
+    let rows = parseInt(document.getElementById("seatRows").value);
+    let cols = parseInt(document.getElementById("seatCols").value);
+    let defaultPrice = parseFloat(document.getElementById("defaultPrice").value);
+    let vipRows = parseInt(document.getElementById("vipRows").value);
+
+    let res = await fetch(`${API_BASE}/admin/events/${eventId}/generate-seats?rows=${rows}&cols=${cols}&defaultPrice=${defaultPrice}`, { method: "POST" });
+    if (res.ok) {
+        let seats = await fetch(`${API_BASE}/admin/events/${eventId}/seats`).then(r => r.json());
+        let vipPrice = defaultPrice * 2;
+        
+        await Promise.all(seats.map(async (seat) => {
+            if (seat.rowIndex <= vipRows) {
+                await fetch(`${API_BASE}/admin/seats/${seat.id}/update-price?price=${vipPrice}`, { method: "POST" });
+            }
+        }));
+
+        showToast("Seats generated with VIP rows");
+        loadSeatConfig();
+    } else {
+        alert("Generation failed");
+    }
+}
+
+async function updateSeatPrice(seatId) {
+    let newPrice = prompt("Enter new price for this seat:");
+    if (newPrice && !isNaN(newPrice)) {
+        await fetch(`${API_BASE}/admin/seats/${seatId}/update-price?price=${newPrice}`, { method: "POST" });
+        showToast("Price updated");
+        loadSeatConfig();
+    }
+}
+
+// ==================== DEMOGRAPHICS ====================
+async function loadDemographics() {
+    try {
+        let data = await fetch(`${API_BASE}/admin/demographics`).then(r => r.json());
+        if (genderChart) genderChart.destroy();
+        const ctxGen = document.getElementById("genderChart").getContext('2d');
+        genderChart = new Chart(ctxGen, {
+            type: 'pie',
+            data: { labels: ['Male', 'Female', 'Other'], datasets: [{ data: [data.gender?.male || 0, data.gender?.female || 0, data.gender?.other || 0], backgroundColor: ['#0d5bd7', '#f43f5e', '#8b5cf6'] }] }
+        });
+        if (ageChart) ageChart.destroy();
+        const ctxAge = document.getElementById("ageChart").getContext('2d');
+        ageChart = new Chart(ctxAge, {
+            type: 'bar',
+            data: { labels: ['18-24', '25-34', '35-44', '45+'], datasets: [{ label: 'Number of Users', data: [data.age?.['18-24'] || 0, data.age?.['25-34'] || 0, data.age?.['35-44'] || 0, data.age?.['45+'] || 0], backgroundColor: '#0d5bd7', borderRadius: 8 }] }
+        });
+    } catch(e) { console.error(e); }
+}
+
+window.addEventListener("DOMContentLoaded", checkAdmin);
+</script>
+</body>
+</html>	

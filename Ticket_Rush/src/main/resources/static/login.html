@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Login - Ticket Rush</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+    body { 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+        min-height: 100vh; 
+        font-family: 'Inter', sans-serif;
+    }
+    .card-box { 
+        border-radius: 20px; 
+        border: none; 
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        background: rgba(255,255,255,0.95);
+        transition: all 0.3s ease;
+    }
+    .title { color: #0d5bd7; font-weight: 700; }
+    .btn-login { 
+        background: #0d5bd7; 
+        border: none; 
+        padding: 12px; 
+        font-weight: 600; 
+        border-radius: 50px;
+        transition: all 0.3s ease;
+    }
+    .btn-login:hover { background: #0a4ab3; transform: translateY(-2px); }
+    .btn-send-otp { 
+        background: #28a745; 
+        border: none; 
+        padding: 12px; 
+        font-weight: 600; 
+        border-radius: 50px;
+        transition: all 0.3s ease;
+    }
+    .btn-send-otp:hover:not(:disabled) { background: #218838; transform: translateY(-2px); }
+    .btn-send-otp:disabled { background: #6c757d; cursor: not-allowed; opacity: 0.7; }
+    .input-group-text { background: #f0f0f0; border: none; border-radius: 10px 0 0 10px; }
+    .form-control { 
+        border: 1px solid #e0e0e0; 
+        border-radius: 10px; 
+        padding: 12px 15px; 
+        background: white; 
+        color: #333;
+        transition: all 0.2s ease;
+    }
+    .form-control:focus { 
+        box-shadow: 0 0 0 3px rgba(13,91,215,0.1);
+        border-color: #0d5bd7; 
+        outline: none; 
+    }
+    .alert-custom { border-radius: 10px; font-size: 14px; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    /* OTP Input - Cải thiện đồng bộ */
+    .otp-input {
+        font-size: 20px;
+        text-align: center;
+        letter-spacing: 4px;
+        font-weight: 600;
+        background: white !important;
+        color: #0d5bd7 !important;
+        border-radius: 10px !important;
+        padding: 12px 15px !important;
+    }
+    .otp-input::placeholder {
+        font-size: 14px;
+        letter-spacing: normal;
+        color: #bbb;
+        font-weight: normal;
+    }
+    
+    .tab-btn {
+        cursor: pointer;
+        padding: 10px 20px;
+        border: none;
+        background: transparent;
+        font-weight: 600;
+        color: #888;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    .tab-btn.active { color: #0d5bd7; }
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 20%;
+        width: 60%;
+        height: 3px;
+        background: #0d5bd7;
+        border-radius: 3px;
+    }
+    .resend-btn { 
+        font-size: 14px; 
+        cursor: pointer; 
+        color: #0d5bd7; 
+        transition: opacity 0.2s ease;
+    }
+    .resend-btn:hover:not(.disabled) { opacity: 0.7; }
+    .resend-btn.disabled { color: #aaa; cursor: not-allowed; opacity: 0.5; }
+    .timer-text { font-size: 14px; color: #888; margin-left: 10px; }
+    
+    /* Loading spinner */
+    .btn-loading {
+        pointer-events: none;
+        opacity: 0.7;
+    }
+    .spinner-sm {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 0.6s linear infinite;
+        margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="container mt-5">
+    <div class="col-md-4 mx-auto">
+        <div class="card p-4 card-box">
+            <div class="text-center mb-3">
+                <i class="fas fa-ticket-alt fa-3x" style="color:#0d5bd7;"></i>
+                <h3 class="title mt-2">Welcome Back</h3>
+                <p class="text-muted">Sign in to your account</p>
+            </div>
+            
+            <div class="text-center mb-4">
+                <button id="tabPassword" class="tab-btn active" onclick="switchTab('password')"><i class="fas fa-lock"></i> Password</button>
+                <button id="tabOtp" class="tab-btn" onclick="switchTab('otp')"><i class="fas fa-key"></i> OTP Code</button>
+            </div>
+            
+            <div id="alertBox" class="alert alert-custom d-none" role="alert"></div>
+            
+            <!-- Password Form -->
+            <div id="passwordForm">
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                    <input id="email" class="form-control" placeholder="Email address" type="email">
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input id="password" type="password" class="form-control" placeholder="Password">
+                </div>
+                <div class="text-end mb-3"><a href="forgot-password.html" style="font-size: 14px;">Forgot password?</a></div>
+                <button id="loginPasswordBtn" onclick="loginWithPassword()" class="btn btn-primary w-100 btn-login"><i class="fas fa-sign-in-alt me-2"></i>Sign In</button>
+            </div>
+            
+            <!-- OTP Form -->
+            <div id="otpForm" style="display: none;">
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                    <input id="otpEmail" class="form-control" placeholder="Email address" type="email">
+                </div>
+                <button id="sendOtpBtn" onclick="sendLoginOtp()" class="btn btn-send-otp w-100 mb-3"><i class="fas fa-paper-plane me-2"></i>Send OTP</button>
+                
+                <div id="otpInputSection" style="display: none;">
+                    <p class="text-muted text-center mb-2"><i class="fas fa-envelope"></i> OTP sent to <strong id="showEmail"></strong></p>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-key"></i></span>
+                        <input id="otpCode" class="form-control otp-input" placeholder="Enter OTP" maxlength="6" autocomplete="off">
+                    </div>
+                    <button id="verifyOtpBtn" onclick="verifyLoginOtp()" class="btn btn-primary w-100 btn-login mb-2"><i class="fas fa-check-circle me-2"></i>Verify & Login</button>
+                    <div class="text-center">
+                        <span id="resendBtn" class="resend-btn" onclick="resendLoginOtp()"><i class="fas fa-redo"></i> Resend OTP</span>
+                        <span id="timerText" class="timer-text"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="my-4">
+            <p class="text-center mb-0">Don't have an account? <a href="register.html" style="font-weight: 600;">Create one</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+const API_BASE = "http://localhost:8082";
+let tempOtpEmail = "";
+let countdownInterval = null;
+let remainingSeconds = 0;
+let isSendingOtp = false;
+
+// ========== LƯU/LẤY STATE ==========
+function saveOtpState(email, expiresAt) {
+    if (email && expiresAt) {
+        localStorage.setItem('otp_email', email);
+        localStorage.setItem('otp_expires_at', expiresAt);
+        localStorage.setItem('otp_step2_visible', 'true');
+    }
+}
+
+function saveActiveTab(tab) {
+    localStorage.setItem('active_tab', tab);
+}
+
+function loadActiveTab() {
+    return localStorage.getItem('active_tab') || 'password';
+}
+
+function loadOtpState() {
+    const savedEmail = localStorage.getItem('otp_email');
+    const savedExpiresAt = localStorage.getItem('otp_expires_at');
+    const savedStep2Visible = localStorage.getItem('otp_step2_visible');
+    
+    if (savedEmail && savedExpiresAt && savedStep2Visible === 'true') {
+        const now = Date.now();
+        const expiresAt = parseInt(savedExpiresAt);
+        
+        if (now < expiresAt) {
+            tempOtpEmail = savedEmail;
+            document.getElementById("showEmail").innerText = savedEmail;
+            document.getElementById("otpInputSection").style.display = 'block';
+            document.getElementById("otpEmail").value = savedEmail;
+            
+            const remaining = Math.ceil((expiresAt - now) / 1000);
+            if (remaining > 0) startCountdown(remaining);
+            return true;
+        } else {
+            clearOtpState();
+        }
+    }
+    return false;
+}
+
+function clearOtpState() {
+    localStorage.removeItem('otp_email');
+    localStorage.removeItem('otp_expires_at');
+    localStorage.removeItem('otp_step2_visible');
+}
+
+function startCountdown(seconds) {
+    remainingSeconds = seconds;
+    const sendBtn = document.getElementById('sendOtpBtn');
+    const resendBtn = document.getElementById('resendBtn');
+    const timerText = document.getElementById('timerText');
+    
+    sendBtn.disabled = true;
+    resendBtn.classList.add('disabled');
+    resendBtn.style.pointerEvents = 'none';
+    
+    const expiresAt = Date.now() + (seconds * 1000);
+    if (tempOtpEmail) saveOtpState(tempOtpEmail, expiresAt);
+    
+    if (countdownInterval) clearInterval(countdownInterval);
+    
+    countdownInterval = setInterval(() => {
+        if (remainingSeconds <= 0) {
+            clearInterval(countdownInterval);
+            sendBtn.disabled = false;
+            resendBtn.classList.remove('disabled');
+            resendBtn.style.pointerEvents = 'auto';
+            timerText.textContent = '';
+            clearOtpState();
+        } else {
+            timerText.textContent = `(${remainingSeconds}s)`;
+            remainingSeconds--;
+            if (tempOtpEmail) {
+                localStorage.setItem('otp_expires_at', Date.now() + (remainingSeconds * 1000));
+            }
+        }
+    }, 1000);
+}
+
+function stopCountdown() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+}
+
+function showAlert(message, type) {
+    const alertBox = document.getElementById('alertBox');
+    alertBox.textContent = message;
+    alertBox.className = `alert alert-custom alert-${type}`;
+    alertBox.classList.remove('d-none');
+    setTimeout(() => {
+        alertBox.classList.add('d-none');
+    }, 4000);
+}
+
+function setButtonLoading(btn, isLoading, originalText) {
+    if (isLoading) {
+        btn.disabled = true;
+        btn.classList.add('btn-loading');
+        btn.innerHTML = '<span class="spinner-sm"></span>Loading...';
+    } else {
+        btn.disabled = false;
+        btn.classList.remove('btn-loading');
+        btn.innerHTML = originalText;
+    }
+}
+
+function switchTab(tab) {
+    stopCountdown();
+    saveActiveTab(tab);
+    
+    if (tab === 'password') {
+        document.getElementById('passwordForm').style.display = 'block';
+        document.getElementById('otpForm').style.display = 'none';
+        document.getElementById('tabPassword').classList.add('active');
+        document.getElementById('tabOtp').classList.remove('active');
+        clearOtpState();
+    } else {
+        document.getElementById('passwordForm').style.display = 'none';
+        document.getElementById('otpForm').style.display = 'block';
+        document.getElementById('tabPassword').classList.remove('active');
+        document.getElementById('tabOtp').classList.add('active');
+        loadOtpState();
+    }
+}
+
+// ========== LOGIN WITH PASSWORD ==========
+function loginWithPassword() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const btn = document.getElementById('loginPasswordBtn');
+    
+    if (!email || !password) {
+        showAlert("Please enter email and password", "danger");
+        return;
+    }
+    
+    setButtonLoading(btn, true, '<i class="fas fa-sign-in-alt me-2"></i>Sign In');
+    
+    fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ email: email, password: password })
+    })
+    .then(res => {
+        if (!res.ok) return res.text().then(text => { throw new Error(text); });
+        return res.json();
+    })
+    .then(data => {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data));
+        showAlert("Login successful! Redirecting...", "success");
+        setTimeout(() => window.location.href = "index.html", 1000);
+    })
+    .catch(err => showAlert(err.message, "danger"))
+    .finally(() => setButtonLoading(btn, false, '<i class="fas fa-sign-in-alt me-2"></i>Sign In'));
+}
+
+// ========== LOGIN WITH OTP ==========
+function sendLoginOtp() {
+    if (isSendingOtp) return;
+    
+    const email = document.getElementById("otpEmail").value.trim();
+    const sendBtn = document.getElementById('sendOtpBtn');
+    const btnOriginalText = '<i class="fas fa-paper-plane me-2"></i>Send OTP';
+    
+    if (sendBtn.disabled && remainingSeconds > 0) {
+        showAlert(`Please wait ${remainingSeconds} seconds`, "warning");
+        return;
+    }
+    
+    if (!email) {
+        showAlert("Please enter your email address", "danger");
+        return;
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showAlert("Please enter a valid email address", "danger");
+        return;
+    }
+    
+    isSendingOtp = true;
+    setButtonLoading(sendBtn, true, btnOriginalText);
+    
+    fetch(`${API_BASE}/auth/send-login-otp`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ email: email })
+    })
+    .then(async res => {
+        if (!res.ok) {
+            const msg = await res.text();
+            if (msg.includes("chưa được đăng ký")) {
+                throw new Error("Email chưa được đăng ký. Vui lòng đăng ký trước.");
+            }
+            throw new Error(msg);
+        }
+        return res.json();
+    })
+    .then(() => {
+        tempOtpEmail = email;
+        document.getElementById("showEmail").innerText = email;
+        document.getElementById("otpInputSection").style.display = 'block';
+        document.getElementById("otpCode").value = '';
+        document.getElementById("otpCode").focus();
+        showAlert(`✅ OTP sent to ${email}`, "success");
+        startCountdown(60);
+    })
+    .catch(err => showAlert(err.message, "danger"))
+    .finally(() => {
+        isSendingOtp = false;
+        if (remainingSeconds <= 0) {
+            setButtonLoading(sendBtn, false, btnOriginalText);
+        }
+    });
+}
+
+function verifyLoginOtp() {
+    const otp = document.getElementById("otpCode").value.trim();
+    const btn = document.getElementById('verifyOtpBtn');
+    const btnOriginalText = '<i class="fas fa-check-circle me-2"></i>Verify & Login';
+    
+    if (!otp || otp.length !== 6) {
+        showAlert("Please enter 6-digit OTP code", "danger");
+        return;
+    }
+    
+    setButtonLoading(btn, true, btnOriginalText);
+    
+    fetch(`${API_BASE}/auth/login-otp`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ email: tempOtpEmail, otp: otp })
+    })
+    .then(async res => {
+        if (!res.ok) {
+            const msg = await res.text();
+            throw new Error(msg);
+        }
+        return res.json();
+    })
+    .then(data => {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data));
+        showAlert("✅ Login successful! Redirecting...", "success");
+        stopCountdown();
+        clearOtpState();
+        setTimeout(() => window.location.href = "index.html", 1000);
+    })
+    .catch(err => showAlert(err.message, "danger"))
+    .finally(() => setButtonLoading(btn, false, btnOriginalText));
+}
+
+function resendLoginOtp() {
+    const resendBtn = document.getElementById('resendBtn');
+    
+    if (resendBtn.classList.contains('disabled')) {
+        showAlert(`Please wait ${remainingSeconds} seconds`, "warning");
+        return;
+    }
+    
+    if (!tempOtpEmail) {
+        showAlert("Please send OTP first", "danger");
+        return;
+    }
+    
+    fetch(`${API_BASE}/auth/send-login-otp`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ email: tempOtpEmail })
+    })
+    .then(async res => {
+        if (!res.ok) {
+            const msg = await res.text();
+            if (msg.includes("chưa được đăng ký")) throw new Error("Email chưa được đăng ký");
+            throw new Error(msg);
+        }
+        return res.json();
+    })
+    .then(() => {
+        showAlert(`✅ New OTP sent to ${tempOtpEmail}`, "success");
+        document.getElementById("otpCode").value = "";
+        document.getElementById("otpCode").focus();
+        if (countdownInterval) clearInterval(countdownInterval);
+        startCountdown(60);
+    })
+    .catch(err => showAlert(err.message, "danger"));
+}
+
+// Xử lý input OTP
+document.addEventListener('DOMContentLoaded', function() {
+    const otpInput = document.getElementById('otpCode');
+    if (otpInput) {
+        otpInput.addEventListener('input', function(e) {
+            let val = this.value.replace(/[^0-9]/g, '');
+            this.value = val;
+            if (val.length === 6) verifyLoginOtp();
+        });
+    }
+    
+    // Debounce cho email input (tránh lag)
+    let debounceTimer;
+    const otpEmailInput = document.getElementById('otpEmail');
+    if (otpEmailInput) {
+        otpEmailInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+        });
+    }
+    
+    // Khôi phục tab
+    const savedTab = loadActiveTab();
+    switchTab(savedTab);
+});
+
+// Enter key support
+document.getElementById("password")?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') loginWithPassword();
+});
+document.getElementById("otpEmail")?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') sendLoginOtp();
+});
+document.getElementById("otpCode")?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') verifyLoginOtp();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TicketMaster - Select Seats</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f5f7fa; }
+        
+        .header { background: #0d5bd7; padding: 14px 40px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: white; text-decoration: none; cursor: pointer; }
+        .logo i { margin-right: 8px; }
+        .user-menu { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.15); padding: 6px 16px; border-radius: 40px; cursor: pointer; color: white; }
+        .avatar-sm { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
+        
+        .dropdown-menu-custom { position: absolute; right: 40px; top: 70px; width: 260px; background: white; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); display: none; z-index: 1000; }
+        .menu-item { padding: 12px 18px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 12px; }
+        .menu-item:hover { background: #f5f5f5; }
+        .logout { color: #dc3545; }
+        
+        .container-custom { max-width: 1400px; margin: 30px auto; padding: 0 30px; }
+        
+        /* Event Card with Image */
+        .event-card { background: white; border-radius: 28px; overflow: hidden; margin-bottom: 30px; box-shadow: 0 10px 35px rgba(0,0,0,0.08); }
+        .event-image { width: 100%; height: 240px; object-fit: cover; }
+        .event-info { padding: 25px 35px; }
+        .event-title { font-size: 1.8rem; font-weight: 800; color: #1a2a3a; margin-bottom: 12px; }
+        .event-category { display: inline-block; background: #e8f0fe; color: #0d5bd7; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 15px; }
+        .event-details { display: flex; flex-wrap: wrap; gap: 20px; margin: 15px 0; color: #6c7a8a; }
+        .event-details i { width: 20px; color: #0d5bd7; margin-right: 8px; }
+        .event-description { color: #4a5a6a; line-height: 1.6; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eef2f6; }
+        
+        .seat-wrapper { background: white; border-radius: 28px; padding: 30px; box-shadow: 0 10px 35px rgba(0,0,0,0.08); }
+        .screen { background: linear-gradient(180deg, #1a2a3a 0%, #2a3a4a 100%); color: white; text-align: center; padding: 15px; border-radius: 20px 20px 8px 8px; margin-bottom: 30px; font-weight: 600; letter-spacing: 4px; }
+        
+        .seat-grid { display: flex; flex-direction: column; gap: 12px; overflow-x: auto; padding: 10px 0; }
+        .seat-row { display: flex; justify-content: center; gap: 10px; flex-wrap: nowrap; }
+        .row-label { width: 45px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #0d5bd7; background: #e8f0fe; border-radius: 12px; margin-right: 10px; }
+        
+        .seat { width: 55px; height: 55px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; position: relative; }
+        .seat i { font-size: 14px; margin-bottom: 2px; }
+        .seat.available { background: #e0e7ff; border: 2px solid #0d5bd7; color: #0d5bd7; }
+        .seat.available:hover { transform: scale(1.08); background: #0d5bd7; color: white; }
+        .seat.vip { background: #fde68a; border: 2px solid #d97706; color: #92400e; }
+        .seat.vip:hover { transform: scale(1.08); background: #d97706; color: white; }
+        .seat.locked { background: #fed7aa; border: 2px solid #ea580c; color: #9a3412; cursor: not-allowed; }
+        .seat.locked::after { content: "\f023"; font-family: "Font Awesome 6 Free"; font-weight: 900; position: absolute; top: 4px; right: 6px; font-size: 10px; }
+        .seat.sold { background: #dcfce7; border: 2px solid #16a34a; color: #16a34a; cursor: not-allowed; }
+        
+        .legend { display: flex; flex-wrap: wrap; gap: 20px; margin: 25px 0; padding: 20px 0; border-top: 1px solid #eef2f6; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+        .legend-box { width: 30px; height: 30px; border-radius: 8px; }
+        .legend-box.available { background: #e0e7ff; border: 2px solid #0d5bd7; }
+        .legend-box.vip { background: #fde68a; border: 2px solid #d97706; }
+        .legend-box.locked { background: #fed7aa; border: 2px solid #ea580c; }
+        .legend-box.sold { background: #dcfce7; border: 2px solid #16a34a; }
+        
+        .cart-panel { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 10px 35px rgba(0,0,0,0.08); position: sticky; top: 100px; }
+        .cart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #eef2f6; }
+        .cart-header h5 { margin: 0; font-weight: 700; }
+        .cart-items { max-height: 400px; overflow-y: auto; margin-bottom: 20px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eef2f6; }
+        .cart-item-info { flex: 1; }
+        .cart-item-seat { font-weight: 700; color: #1a2a3a; }
+        .cart-timer { font-size: 11px; color: #dc2626; margin-top: 4px; font-weight: 600; }
+        .cart-timer i { margin-right: 4px; }
+        .cart-item-price { color: #0d5bd7; font-weight: 600; }
+        .cart-item-actions button { background: none; border: none; color: #dc3545; cursor: pointer; margin-left: 10px; }
+        .cart-total { padding-top: 15px; border-top: 2px solid #eef2f6; }
+        .total-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .grand-total { font-size: 1.2rem; font-weight: 800; color: #0d5bd7; }
+        .btn-checkout { background: #0d5bd7; color: white; border: none; padding: 14px; border-radius: 50px; font-weight: 700; width: 100%; transition: 0.2s; }
+        .btn-checkout:hover { background: #0a4ab3; transform: translateY(-2px); }
+        .btn-checkout:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .btn-clear-cart { background: none; border: none; color: #dc3545; font-size: 13px; }
+        
+        .loading-spinner { text-align: center; padding: 60px; }
+        .spinner { width: 50px; height: 50px; border: 3px solid #e2e8f0; border-top-color: #0d5bd7; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .toast-notification { position: fixed; bottom: 30px; right: 30px; background: #0d5bd7; color: white; padding: 14px 28px; border-radius: 50px; z-index: 2000; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+        
+        @media (max-width: 992px) { .seat { width: 45px; height: 45px; } .row-label { width: 35px; } .event-image { height: 180px; } }
+        @media (max-width: 768px) { .seat { width: 38px; height: 38px; } .event-title { font-size: 1.3rem; } }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo" onclick="window.location.href='index.html'"><i class="fas fa-ticket-alt"></i> ticketmaster</div>
+    <div id="auth-area"></div>
+</div>
+
+<div class="container-custom">
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <!-- Event Card with Image và Description -->
+            <div class="event-card" id="eventCard">
+                <div class="loading-spinner"><div class="spinner"></div></div>
+            </div>
+            <div class="seat-wrapper">
+                <div class="screen"><i class="fas fa-film me-2"></i> SCREEN</div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-box available"></div><span>Available</span></div>
+                    <div class="legend-item"><div class="legend-box vip"></div><span>VIP Seat</span></div>
+                    <div class="legend-item"><div class="legend-box locked"></div><span>Locked by Others</span></div>
+                    <div class="legend-item"><div class="legend-box sold"></div><span>Sold</span></div>
+                </div>
+                <div id="seatMap" class="seat-grid"><div class="loading-spinner"><div class="spinner"></div></div></div>
+            </div>
+        </div>
+        
+        <div class="col-lg-5">
+            <div class="cart-panel">
+                <div class="cart-header">
+                    <h5><i class="fas fa-shopping-cart me-2" style="color:#0d5bd7;"></i>Your Cart</h5>
+                    <button class="btn-clear-cart" onclick="clearCart()" id="clearCartBtn" style="display:none;"><i class="fas fa-trash-alt"></i> Clear All</button>
+                </div>
+                <div id="cartItems" class="cart-items"><div class="text-center text-muted py-4"><i class="fas fa-chair fa-2x mb-2"></i><p>Your cart is empty</p><small>Click on available seats to add</small></div></div>
+                <div class="cart-total">
+                    <div class="total-row"><span>Subtotal</span><span id="subtotal">$0</span></div>
+                    <div class="total-row"><span>Service Fee (10%)</span><span id="serviceFee">$0</span></div>
+                    <div class="total-row grand-total"><span>Total</span><span id="grandTotal">$0</span></div>
+                    <button class="btn-checkout mt-3" id="checkoutBtn" onclick="processCheckout()" disabled><i class="fas fa-credit-card me-2"></i> Checkout (<span id="cartCount">0</span> items)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script>
+const API_BASE = "http://localhost:8082";
+let currentUser = null;
+let seats = [];
+let cart = [];
+let vipRows = 2;
+let cartTimers = new Map();
+let stompClient = null;
+
+const urlParams = new URLSearchParams(window.location.search);
+const eventId = urlParams.get("eventId");
+const CART_KEY = `cart_${eventId}`;
+
+// ==================== WEBSOCKET REAL-TIME ====================
+function connectWebSocket() {
+    if (!eventId) return;
+    const socket = new SockJS(`${API_BASE}/ws`);
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, () => {
+        console.log("WebSocket connected");
+        stompClient.subscribe('/topic/seats', (message) => {
+            const updatedSeat = JSON.parse(message.body);
+            const idx = seats.findIndex(s => s.id === updatedSeat.id);
+            if (idx !== -1) {
+                seats[idx] = updatedSeat;
+                renderSeatMap();
+                
+                const cartIdx = cart.findIndex(c => c.id === updatedSeat.id);
+                if (cartIdx !== -1 && (updatedSeat.status === "SOLD" || updatedSeat.status === "AVAILABLE")) {
+                    if (cartTimers.has(updatedSeat.id)) {
+                        clearInterval(cartTimers.get(updatedSeat.id));
+                        cartTimers.delete(updatedSeat.id);
+                    }
+                    cart.splice(cartIdx, 1);
+                    saveCart();
+                    updateCartUI();
+                    showToast(`Seat ${updatedSeat.seatCode} is no longer available!`, "error");
+                }
+            }
+        });
+    }, (err) => console.log("WebSocket error:", err));
+}
+
+// ==================== AUTH ====================
+function loadUser() {
+    const userStr = localStorage.getItem("user");
+    currentUser = userStr ? JSON.parse(userStr) : null;
+    const area = document.getElementById("auth-area");
+    if (currentUser) {
+        area.innerHTML = `<div class="user-menu" onclick="toggleMenu(event)"><img src="https://i.pravatar.cc/34?img=${currentUser.username.length}" class="avatar-sm"><span>${currentUser.username}</span><i class="fas fa-chevron-down"></i></div>
+        <div id="dropdownMenu" class="dropdown-menu-custom">
+            <div class="menu-item" onclick="window.location.href='profile.html'">My Profile</div>
+            <div class="menu-item" onclick="window.location.href='my-tickets.html'">My Tickets</div>
+            <div class="menu-item logout" onclick="logout()">Logout</div>
+        </div>`;
+    } else {
+        area.innerHTML = `<a href="login.html" class="btn btn-outline-light btn-sm">Sign In</a>`;
+    }
+}
+
+function toggleMenu(e) { e.stopPropagation(); const m = document.getElementById("dropdownMenu"); if(m) m.style.display = m.style.display === "block" ? "none" : "block"; }
+function logout() { localStorage.removeItem("user"); window.location.href = "login.html"; }
+document.addEventListener("click", () => { const m = document.getElementById("dropdownMenu"); if(m) m.style.display = "none"; });
+
+// ==================== TIMER FUNCTIONS ====================
+function startCartTimer(seatId, lockedUntil, seatCode) {
+    if (cartTimers.has(seatId)) {
+        clearInterval(cartTimers.get(seatId));
+        cartTimers.delete(seatId);
+    }
+    
+    const timer = setInterval(() => {
+        const seatInCart = cart.find(s => s.id === seatId);
+        if (!seatInCart) {
+            clearInterval(timer);
+            cartTimers.delete(seatId);
+            return;
+        }
+        
+        const remaining = Math.max(0, Math.floor((new Date(lockedUntil) - Date.now()) / 1000));
+        seatInCart.remainingSeconds = remaining;
+        updateCartUI();
+        
+        if (remaining <= 0) {
+            clearInterval(timer);
+            cartTimers.delete(seatId);
+            const idx = cart.findIndex(s => s.id === seatId);
+            if (idx !== -1) {
+                cart.splice(idx, 1);
+                saveCart();
+                updateCartUI();
+                renderSeatMap();
+                showToast(`⏰ Seat ${seatCode} reservation expired!`, "error");
+            }
+        }
+    }, 1000);
+    cartTimers.set(seatId, timer);
+}
+
+function stopAllTimers() {
+    cartTimers.forEach(timer => clearInterval(timer));
+    cartTimers.clear();
+}
+
+// ==================== LOAD DATA (CÓ ẢNH VÀ MÔ TẢ) ====================
+async function loadEvent() {
+    try {
+        const event = await fetch(`${API_BASE}/events/${eventId}`).then(r => r.json());
+        
+        // Lấy category display name
+        const categoryNames = {
+            'CONCERT': '🎵 Concert', 'SPORTS': '⚽ Sports', 'THEATRE': '🎭 Theatre',
+            'FAMILY': '👨‍👩‍👧 Family', 'COMEDY': '😂 Comedy'
+        };
+        const categoryDisplay = categoryNames[event.category] || event.category || 'Event';
+        
+        // Xử lý ảnh: dùng imageUrl từ event, nếu không có thì dùng ảnh mặc định theo category
+        let imageUrl = event.imageUrl;
+        if (!imageUrl || imageUrl === "") {
+            const defaultImages = {
+                'CONCERT': 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=600&h=300&fit=crop',
+                'SPORTS': 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600&h=300&fit=crop',
+                'THEATRE': 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&h=300&fit=crop',
+                'FAMILY': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=300&fit=crop',
+                'COMEDY': 'https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=600&h=300&fit=crop'
+            };
+            imageUrl = defaultImages[event.category] || 'https://picsum.photos/600/300?random=1';
+        }
+        
+        document.getElementById("eventCard").innerHTML = `
+            <img src="${imageUrl}" class="event-image" alt="${event.name}" onerror="this.src='https://picsum.photos/600/300?random=1'">
+            <div class="event-info">
+                <div class="event-category">${categoryDisplay}</div>
+                <h1 class="event-title">${event.name}</h1>
+                <div class="event-details">
+                    <span><i class="fas fa-map-marker-alt"></i> ${event.location}</span>
+                    <span><i class="far fa-calendar-alt"></i> ${new Date(event.eventTime).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    <span><i class="far fa-clock"></i> ${new Date(event.eventTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                ${event.description ? `<div class="event-description"><i class="fas fa-info-circle me-2" style="color:#0d5bd7;"></i> ${event.description}</div>` : ''}
+            </div>
+        `;
+        
+        await loadSeats();
+    } catch(e) { 
+        console.error(e);
+        document.getElementById("eventCard").innerHTML = '<div class="text-center text-danger py-5">Failed to load event</div>';
+    }
+}
+
+async function loadSeats() {
+    try {
+        seats = await fetch(`${API_BASE}/seats/${eventId}`).then(r => r.json());
+        renderSeatMap();
+        loadCart();
+    } catch(e) { 
+        console.error(e);
+        document.getElementById("seatMap").innerHTML = '<div class="text-center text-danger py-5">Failed to load seat map</div>';
+    }
+}
+
+function renderSeatMap() {
+    if (!seats.length) {
+        document.getElementById("seatMap").innerHTML = '<div class="text-center text-muted py-5">No seats available</div>';
+        return;
+    }
+    
+    const rows = [...new Set(seats.map(s => s.rowIndex))].sort((a,b)=>a-b);
+    let html = "";
+    rows.forEach(row => {
+        const rowSeats = seats.filter(s => s.rowIndex === row).sort((a,b)=>a.colIndex-b.colIndex);
+        html += `<div class="seat-row"><div class="row-label">${String.fromCharCode(64 + row)}</div>`;
+        rowSeats.forEach(seat => {
+            const isVip = row <= vipRows;
+            const inCart = cart.some(c => c.id === seat.id);
+            let cls = isVip ? "vip" : "available";
+            let icon = "<i class='fas fa-chair'></i>";
+            let canClick = true;
+            
+            if (inCart) {
+                cls = "locked";
+                icon = "<i class='fas fa-clock'></i>";
+                canClick = true;
+            }
+            else if (seat.status === "LOCKED") {
+                cls = "locked";
+                icon = "<i class='fas fa-clock'></i>";
+                canClick = false;
+            } 
+            else if (seat.status === "SOLD") {
+                cls = "sold";
+                icon = "<i class='fas fa-times-circle'></i>";
+                canClick = false;
+            }
+            
+            const onclick = canClick ? `onclick="handleSeatClick(${seat.id})"` : '';
+            html += `<div class="seat ${cls}" ${onclick} title="Seat ${String.fromCharCode(64+row)}-${seat.colIndex} - $${seat.price} ${isVip ? '(VIP)' : ''}">${icon}<span>${seat.colIndex}</span></div>`;
+        });
+        html += `</div>`;
+    });
+    document.getElementById("seatMap").innerHTML = html;
+}
+
+// ==================== CART ====================
+function saveCart() {
+    sessionStorage.setItem(CART_KEY, JSON.stringify(cart));
+}
+
+function loadCart() {
+    const saved = sessionStorage.getItem(CART_KEY);
+    if (saved) {
+        try { 
+            cart = JSON.parse(saved);
+            cart.forEach(seat => {
+                if (seat.lockedUntil && new Date(seat.lockedUntil) > new Date()) {
+                    startCartTimer(seat.id, seat.lockedUntil, seat.seatCode);
+                }
+            });
+            updateCartUI();
+            renderSeatMap();
+        } catch(e) { cart = []; }
+    }
+}
+
+async function handleSeatClick(seatId) {
+    if (!currentUser) { showToast("Please login first!", "error"); return; }
+    if (!eventId) { showToast("Invalid event!", "error"); return; }
+    
+    const seat = seats.find(s => s.id === seatId);
+    if (!seat) return;
+    
+    const existing = cart.find(c => c.id === seatId);
+    if (existing) {
+        if (cartTimers.has(seatId)) {
+            clearInterval(cartTimers.get(seatId));
+            cartTimers.delete(seatId);
+        }
+        cart = cart.filter(c => c.id !== seatId);
+        saveCart();
+        updateCartUI();
+        renderSeatMap();
+        showToast(`Removed seat ${seat.seatCode} from cart`, "info");
+        return;
+    }
+    
+    if (seat.status === "SOLD") { showToast("Seat already sold!", "error"); return; }
+    if (seat.status === "LOCKED") {
+        if (seat.lockedBy?.id !== currentUser.id) {
+            showToast("Seat is held by another user!", "error"); 
+            return;
+        }
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/seats/lock`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ seatId: seat.id, userId: currentUser.id })
+        });
+        
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error);
+        }
+        
+        const lockedSeat = await response.json();
+        
+        cart.push({
+            id: seat.id,
+            row: seat.rowIndex,
+            col: seat.colIndex,
+            seatCode: seat.seatCode,
+            price: seat.price,
+            lockedUntil: lockedSeat.lockedUntil,
+            isVip: seat.rowIndex <= vipRows
+        });
+        
+        saveCart();
+        
+        if (lockedSeat.lockedUntil) {
+            startCartTimer(seat.id, lockedSeat.lockedUntil, seat.seatCode);
+        }
+        
+        updateCartUI();
+        await loadSeats();
+        
+        showToast(`✅ Seat ${seat.seatCode} locked! 5 min to checkout.`, "success");
+        
+    } catch(e) {
+        showToast(e.message || "Failed to lock seat!", "error");
+    }
+}
+
+function updateCartUI() {
+    const container = document.getElementById("cartItems");
+    const clearBtn = document.getElementById("clearCartBtn");
+    const checkoutBtn = document.getElementById("checkoutBtn");
+    const cartCountSpan = document.getElementById("cartCount");
+    const subtotalSpan = document.getElementById("subtotal");
+    const serviceFeeSpan = document.getElementById("serviceFee");
+    const grandTotalSpan = document.getElementById("grandTotal");
+    
+    if (!cart.length) {
+        container.innerHTML = `<div class="text-center text-muted py-4"><i class="fas fa-chair fa-2x mb-2"></i><p>Your cart is empty</p><small>Click on available seats to add</small></div>`;
+        if (clearBtn) clearBtn.style.display = "none";
+        if (checkoutBtn) checkoutBtn.disabled = true;
+        if (cartCountSpan) cartCountSpan.innerText = "0";
+        if (subtotalSpan) subtotalSpan.innerText = "$0";
+        if (serviceFeeSpan) serviceFeeSpan.innerText = "$0";
+        if (grandTotalSpan) grandTotalSpan.innerText = "$0";
+        return;
+    }
+    
+    let html = "", subtotal = 0;
+    const now = Date.now();
+    cart.forEach((item, idx) => {
+        subtotal += item.price;
+        let timerHtml = "";
+        if (item.lockedUntil) {
+            const remaining = Math.max(0, Math.floor((new Date(item.lockedUntil) - now) / 1000));
+            const mins = Math.floor(remaining / 60);
+            const secs = remaining % 60;
+            timerHtml = `<div class="cart-timer"><i class="fas fa-hourglass-half"></i> ${mins}:${secs.toString().padStart(2,'0')}</div>`;
+        }
+        html += `<div class="cart-item">
+            <div class="cart-item-info">
+                <div class="cart-item-seat">🎫 Seat ${item.seatCode} ${item.isVip ? '<span class="badge bg-warning text-dark">VIP</span>' : ''}</div>
+                ${timerHtml}
+            </div>
+            <div class="cart-item-price">$${item.price}</div>
+            <div class="cart-item-actions">
+                <button onclick="removeFromCart(${idx})"><i class="fas fa-trash-alt"></i></button>
+            </div>
+        </div>`;
+    });
+    
+    const fee = subtotal * 0.1;
+    container.innerHTML = html;
+    if (clearBtn) clearBtn.style.display = "block";
+    if (checkoutBtn) checkoutBtn.disabled = false;
+    if (cartCountSpan) cartCountSpan.innerText = cart.length;
+    if (subtotalSpan) subtotalSpan.innerText = `$${subtotal.toFixed(2)}`;
+    if (serviceFeeSpan) serviceFeeSpan.innerText = `$${fee.toFixed(2)}`;
+    if (grandTotalSpan) grandTotalSpan.innerText = `$${(subtotal + fee).toFixed(2)}`;
+}
+
+function removeFromCart(idx) {
+    const seat = cart[idx];
+    if (cartTimers.has(seat.id)) {
+        clearInterval(cartTimers.get(seat.id));
+        cartTimers.delete(seat.id);
+    }
+    cart.splice(idx, 1);
+    saveCart();
+    updateCartUI();
+    renderSeatMap();
+    showToast(`Removed ${seat.seatCode} from cart`, "info");
+}
+
+function clearCart() {
+    if (!cart.length) return;
+    if (confirm(`Remove all ${cart.length} seat(s) from cart?`)) {
+        stopAllTimers();
+        cart = [];
+        saveCart();
+        updateCartUI();
+        renderSeatMap();
+        showToast("Cart cleared", "info");
+    }
+}
+
+// ==================== CHECKOUT ====================
+function processCheckout() {
+    if (!cart.length) { 
+        showToast("Your cart is empty!", "error"); 
+        return; 
+    }
+    if (!currentUser) { 
+        showToast("Please login to continue", "error"); 
+        setTimeout(() => window.location.href = "login.html", 1500);
+        return; 
+    }
+    
+    sessionStorage.setItem("checkoutCart", JSON.stringify(cart));
+    window.location.href = `checkout.html?eventId=${eventId}`;
+}
+
+// ==================== CLEAR CART AFTER PAYMENT ====================
+function clearCartAfterPayment() {
+    stopAllTimers();
+    cart = [];
+    saveCart();
+    updateCartUI();
+    renderSeatMap();
+    showToast("Payment completed! Your cart has been cleared.", "success");
+}
+
+function checkPaymentSuccess() {
+    const paymentSuccess = sessionStorage.getItem("payment_success");
+    if (paymentSuccess === "true") {
+        sessionStorage.removeItem("payment_success");
+        clearCartAfterPayment();
+    }
+}
+
+window.addEventListener("storage", (e) => {
+    if (e.key === "payment_success" && e.newValue === "true") {
+        checkPaymentSuccess();
+    }
+});
+
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+        checkPaymentSuccess();
+        loadSeats();
+    }
+});
+
+function showToast(msg, type) {
+    const toast = document.createElement("div");
+    toast.className = "toast-notification";
+    toast.style.background = type === "error" ? "#dc3545" : "#0d5bd7";
+    toast.innerHTML = `<i class="fas ${type === 'error' ? 'fa-exclamation-triangle' : 'fa-check-circle'} me-2"></i>${msg}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+}
+
+// ==================== INIT ====================
+window.addEventListener("DOMContentLoaded", () => {
+    loadUser();
+    loadEvent();
+    connectWebSocket();
+    checkPaymentSuccess();
+});
+
+window.addEventListener("beforeunload", () => {
+    stopAllTimers();
+});
+</script>
+</body>
+</html>

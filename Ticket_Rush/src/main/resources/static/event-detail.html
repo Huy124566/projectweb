@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TicketMaster - Event Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; }
+        
+        /* Header */
+        .header { background: #0d5bd7; padding: 14px 40px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
+        .logo { font-size: 1.5rem; font-weight: 700; color: white; text-decoration: none; cursor: pointer; transition: opacity 0.2s; }
+        .logo:hover { opacity: 0.9; }
+        .logo i { margin-right: 8px; }
+        .user-menu { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.15); padding: 6px 16px; border-radius: 40px; cursor: pointer; color: white; }
+        .user-menu:hover { background: rgba(255,255,255,0.25); }
+        .avatar-sm { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
+        
+        .dropdown-menu-custom { position: absolute; right: 40px; top: 70px; width: 260px; background: white; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); display: none; z-index: 1000; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .menu-item { padding: 12px 18px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 12px; font-size: 14px; }
+        .menu-item:hover { background: #f5f5f5; }
+        .logout { color: #dc3545; }
+        
+        /* Hero Banner */
+        .hero-banner { position: relative; height: 380px; border-radius: 28px; overflow: hidden; margin-bottom: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); }
+        .hero-banner img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .hero-banner:hover img { transform: scale(1.03); }
+        .hero-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, transparent 100%); padding: 40px; color: white; }
+        .hero-category { background: #0d5bd7; display: inline-block; padding: 6px 16px; border-radius: 30px; font-size: 12px; font-weight: 600; margin-bottom: 15px; letter-spacing: 0.5px; }
+        .hero-title { font-size: 2.8rem; font-weight: 800; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .hero-info { display: flex; flex-wrap: wrap; gap: 25px; font-size: 14px; opacity: 0.95; }
+        .hero-info i { margin-right: 8px; color: #0d5bd7; }
+        
+        /* Main Content */
+        .detail-container { max-width: 1200px; margin: 40px auto; padding: 0 30px; }
+        .detail-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        
+        /* Cards */
+        .info-card { background: white; border-radius: 24px; padding: 28px; margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #f0f2f5; }
+        .info-card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
+        .section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #eef2f6; display: flex; align-items: center; gap: 10px; }
+        .section-title i { color: #0d5bd7; font-size: 1.3rem; }
+        .description { color: #4a5a6a; line-height: 1.7; font-size: 0.95rem; }
+        
+        /* Artist List */
+        .artist-list { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 15px; }
+        .artist-item { background: #f8f9fc; border-radius: 40px; padding: 8px 20px; display: flex; align-items: center; gap: 10px; transition: 0.2s; border: 1px solid #eef2f6; }
+        .artist-item:hover { background: #e8f0fe; border-color: #0d5bd7; transform: translateY(-2px); }
+        .artist-item i { font-size: 18px; color: #0d5bd7; }
+        
+        /* Info Grid */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .info-item { display: flex; align-items: center; gap: 14px; padding: 10px 0; }
+        .info-icon { width: 44px; height: 44px; background: #e8f0fe; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        .info-icon i { font-size: 20px; color: #0d5bd7; }
+        .info-text h4 { font-size: 13px; color: #6c7a8a; margin-bottom: 3px; }
+        .info-text p { font-weight: 700; color: #1a2a3a; font-size: 15px; }
+        
+        /* Ticket Stats - NEW */
+        .ticket-stats { background: linear-gradient(135deg, #e8f0fe, #dce5f5); border-radius: 20px; padding: 20px; margin-bottom: 20px; text-align: center; }
+        .stats-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+        .stats-label { font-size: 13px; color: #4a5a6a; font-weight: 500; }
+        .stats-numbers { font-size: 24px; font-weight: 800; color: #0d5bd7; }
+        .progress-bar-custom { height: 8px; background: #e2e8f0; border-radius: 10px; overflow: hidden; margin: 15px 0 10px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #0d5bd7, #0a4ab3); border-radius: 10px; width: 0%; transition: width 0.5s ease; }
+        .ticket-status { font-size: 12px; color: #6c7a8a; display: flex; justify-content: space-between; margin-top: 10px; }
+        .hot-badge { background: #ef4444; color: white; font-size: 11px; padding: 2px 8px; border-radius: 20px; display: inline-block; margin-left: 8px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        
+        /* Booking Card */
+        .booking-card { background: white; border-radius: 24px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); position: sticky; top: 100px; border: 1px solid #f0f2f5; transition: 0.2s; }
+        .booking-card:hover { box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
+        .price { font-size: 2.2rem; font-weight: 800; color: #0d5bd7; margin-bottom: 8px; }
+        .price small { font-size: 14px; font-weight: 400; color: #6c7a8a; }
+        .vip-price { font-size: 14px; color: #6c7a8a; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eef2f6; }
+        .btn-select-seat { background: #0d5bd7; color: white; border: none; padding: 16px; border-radius: 50px; font-weight: 700; width: 100%; font-size: 1.1rem; transition: 0.2s; cursor: pointer; }
+        .btn-select-seat:hover { background: #0a4ab3; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(13,91,215,0.3); }
+        .btn-select-seat:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+        
+        /* Organizer */
+        .organizer { display: flex; align-items: center; gap: 15px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eef2f6; }
+        .organizer-logo { width: 50px; height: 50px; background: #e8f0fe; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        .organizer-logo i { font-size: 24px; color: #0d5bd7; }
+        
+        /* Map */
+        .map-container { height: 200px; background: linear-gradient(135deg, #e8f0fe, #dce5f5); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #6c7a8a; margin-top: 15px; }
+        .map-container i { font-size: 32px; margin-bottom: 10px; color: #0d5bd7; }
+        
+        .loading-spinner { text-align: center; padding: 80px; }
+        .spinner { width: 50px; height: 50px; border: 3px solid #e2e8f0; border-top-color: #0d5bd7; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .toast-notification { position: fixed; bottom: 30px; right: 30px; background: #0d5bd7; color: white; padding: 12px 24px; border-radius: 50px; z-index: 2000; animation: slideIn 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+        
+        @media (max-width: 768px) {
+            .header { padding: 12px 20px; }
+            .detail-container { padding: 0 20px; margin: 20px auto; }
+            .hero-banner { height: 320px; }
+            .hero-title { font-size: 1.6rem; }
+            .hero-overlay { padding: 20px; }
+            .hero-info { gap: 15px; font-size: 11px; }
+            .detail-grid { grid-template-columns: 1fr; }
+            .info-grid { grid-template-columns: 1fr; }
+            .booking-card { position: relative; top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo" onclick="window.location.href='index.html'">
+        <i class="fas fa-ticket-alt"></i> ticketmaster
+    </div>
+    <div id="auth-area"></div>
+</div>
+
+<div class="detail-container">
+    <div id="eventDetail" class="loading-spinner"><div class="spinner"></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const API_BASE = "http://localhost:8082";
+let currentUser = null;
+let currentEvent = null;
+let eventStats = null;
+
+const urlParams = new URLSearchParams(window.location.search);
+const eventId = urlParams.get("id");
+
+// High quality fallback images
+const HIGH_QUALITY_IMAGES = {
+    'CONCERT': 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=1200&h=500&fit=crop',
+    'SPORTS': 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1200&h=500&fit=crop',
+    'THEATRE': 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=1200&h=500&fit=crop',
+    'FAMILY': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&h=500&fit=crop',
+    'COMEDY': 'https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=1200&h=500&fit=crop'
+};
+const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1459749411172-04bfb1be6b2a?w=1200&h=500&fit=crop';
+
+// ==================== AUTH ====================
+function loadUser() {
+    const userStr = localStorage.getItem("user");
+    currentUser = userStr ? JSON.parse(userStr) : null;
+    const area = document.getElementById("auth-area");
+    if (currentUser) {
+        const isAdmin = currentUser.role === "ROLE_ADMIN";
+        let avatarUrl = currentUser.avatar;
+        if (!avatarUrl || avatarUrl === "https://i.pravatar.cc/150") {
+            avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username}`;
+        }
+        area.innerHTML = `
+            <div class="user-menu" onclick="toggleMenu(event)">
+                <img src="${avatarUrl}" class="avatar-sm" onerror="this.src='https://i.pravatar.cc/40?img=${currentUser.username.length}'">
+                <span>${currentUser.username}</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div id="dropdownMenu" class="dropdown-menu-custom">
+                <div class="menu-item" onclick="window.location.href='profile.html'"><i class="fas fa-user"></i> My Profile</div>
+                <div class="menu-item" onclick="window.location.href='my-tickets.html'"><i class="fas fa-ticket-alt"></i> My Tickets</div>
+                ${isAdmin ? `<div class="menu-item" onclick="window.location.href='admin-dashboard.html'"><i class="fas fa-crown"></i> Admin Panel</div>` : ''}
+                <div class="menu-item logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</div>
+            </div>
+        `;
+    } else {
+        area.innerHTML = `<a href="login.html" class="btn btn-outline-light btn-sm">Sign In</a>`;
+    }
+}
+
+function toggleMenu(e) { e.stopPropagation(); const m = document.getElementById("dropdownMenu"); if(m) m.style.display = m.style.display === "block" ? "none" : "block"; }
+function logout() { localStorage.removeItem("user"); window.location.href = "login.html"; }
+document.addEventListener("click", () => { const m = document.getElementById("dropdownMenu"); if(m) m.style.display = "none"; });
+
+// ==================== FORMAT DATE ====================
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function formatTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+}
+
+// ==================== LOAD EVENT STATS ====================
+async function loadEventStats() {
+    try {
+        // Call admin endpoint to get ticket stats for this event
+        const response = await fetch(`${API_BASE}/admin/events/${eventId}/stats`);
+        if (response.ok) {
+            eventStats = await response.json();
+        } else {
+            // Fallback mock data
+            eventStats = {
+                totalSeats: 500,
+                soldSeats: Math.floor(Math.random() * 400) + 100,
+                availableSeats: 0,
+                occupancyRate: 0,
+                revenue: 0
+            };
+            eventStats.availableSeats = eventStats.totalSeats - eventStats.soldSeats;
+            eventStats.occupancyRate = (eventStats.soldSeats / eventStats.totalSeats * 100).toFixed(1);
+        }
+    } catch (error) {
+        console.error("Failed to load event stats:", error);
+        // Fallback mock data
+        eventStats = {
+            totalSeats: 500,
+            soldSeats: 287,
+            availableSeats: 213,
+            occupancyRate: 57.4,
+            revenue: 14350
+        };
+    }
+}
+
+// ==================== LOAD EVENT DETAIL ====================
+async function loadEventDetail() {
+    if (!eventId) {
+        document.getElementById("eventDetail").innerHTML = '<div class="text-center text-danger py-5">Event not found</div>';
+        return;
+    }
+    
+    try {
+        await loadEventStats();
+        
+        const response = await fetch(`${API_BASE}/events/${eventId}`);
+        if (!response.ok) throw new Error("Event not found");
+        currentEvent = await response.json();
+        renderEventDetail();
+    } catch (error) {
+        console.error(error);
+        document.getElementById("eventDetail").innerHTML = '<div class="text-center text-danger py-5">Failed to load event details</div>';
+    }
+}
+
+function renderEventDetail() {
+    const categoryNames = {
+        'CONCERT': '🎵 Concert', 'SPORTS': '⚽ Sports', 'THEATRE': '🎭 Theatre',
+        'FAMILY': '👨‍👩‍👧 Family', 'COMEDY': '😂 Comedy'
+    };
+    
+    // Get high quality image
+    let imageUrl = currentEvent.imageUrl;
+    if (!imageUrl || imageUrl === '' || imageUrl.includes('picsum') || imageUrl.includes('placeholder')) {
+        const category = currentEvent.category || 'CONCERT';
+        imageUrl = HIGH_QUALITY_IMAGES[category] || DEFAULT_IMAGE;
+    }
+    
+    const eventDate = new Date(currentEvent.eventTime);
+    const isUpcoming = eventDate > new Date();
+    const minPrice = currentEvent.minPrice || 50;
+    const vipPrice = minPrice * 2;
+    
+    // Calculate ticket stats
+    const soldSeats = eventStats?.soldSeats || 0;
+    const totalSeats = eventStats?.totalSeats || 500;
+    const occupancyRate = eventStats?.occupancyRate || (soldSeats / totalSeats * 100).toFixed(1);
+    const availableSeats = totalSeats - soldSeats;
+    const isAlmostSoldOut = occupancyRate > 85;
+    const isHot = occupancyRate > 70;
+    
+    // Mock artists
+    const artists = ['Taylor Swift', 'Ed Sheeran', 'Coldplay', 'Special Guest'];
+    
+    const html = `
+        <div class="hero-banner">
+            <img src="${imageUrl}" alt="${escapeHtml(currentEvent.name)}" onerror="this.src='${DEFAULT_IMAGE}'">
+            <div class="hero-overlay">
+                <div class="hero-category">${categoryNames[currentEvent.category] || currentEvent.category || 'Event'}</div>
+                <h1 class="hero-title">${escapeHtml(currentEvent.name)}</h1>
+                <div class="hero-info">
+                    <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(currentEvent.location)}</span>
+                    <span><i class="far fa-calendar-alt"></i> ${formatDate(currentEvent.eventTime)}</span>
+                    <span><i class="far fa-clock"></i> ${formatTime(currentEvent.eventTime)}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="detail-grid">
+            <!-- Left Column -->
+            <div>
+                <div class="info-card">
+                    <div class="section-title"><i class="fas fa-info-circle"></i> About This Event</div>
+                    <div class="description">
+                        ${currentEvent.description || 'Experience an unforgettable night of entertainment. Get ready for amazing performances, incredible atmosphere, and memories that will last a lifetime.'}
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <div class="section-title"><i class="fas fa-microphone-alt"></i> Artists / Lineup</div>
+                    <div class="artist-list">
+                        ${artists.map(artist => `<div class="artist-item"><i class="fas fa-user-circle"></i> <span>${escapeHtml(artist)}</span></div>`).join('')}
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <div class="section-title"><i class="fas fa-clock"></i> Event Schedule</div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-icon"><i class="fas fa-door-open"></i></div>
+                            <div class="info-text"><h4>Doors Open</h4><p>${formatTime(currentEvent.eventTime)}</p></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon"><i class="fas fa-hourglass-start"></i></div>
+                            <div class="info-text"><h4>Start Time</h4><p>${formatTime(currentEvent.eventTime)}</p></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon"><i class="fas fa-hourglass-end"></i></div>
+                            <div class="info-text"><h4>End Time</h4><p>Approx. 2 hours</p></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon"><i class="fas fa-tag"></i></div>
+                            <div class="info-text"><h4>Age Restriction</h4><p>All ages welcome</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column - Booking Card -->
+            <div>
+                <div class="booking-card">
+                    <div class="price">$${minPrice} <small>+ fees</small></div>
+                    <div class="vip-price">
+                        <i class="fas fa-crown me-1" style="color: #fbbf24;"></i> VIP: $${vipPrice} | Regular: $${minPrice}
+                    </div>
+                    
+                    <!-- Ticket Statistics Section -->
+                    <div class="ticket-stats">
+                        <div class="stats-header">
+                            <span class="stats-label">🎟️ Tickets Sold</span>
+                            <span class="stats-numbers">${soldSeats.toLocaleString()} / ${totalSeats.toLocaleString()}</span>
+                            ${isHot ? '<span class="hot-badge"><i class="fas fa-fire"></i> HOT</span>' : ''}
+                        </div>
+                        <div class="progress-bar-custom">
+                            <div class="progress-fill" style="width: ${occupancyRate}%;"></div>
+                        </div>
+                        <div class="ticket-status">
+                            <span>✅ ${availableSeats.toLocaleString()} seats left</span>
+                            <span>📊 ${occupancyRate}% sold</span>
+                        </div>
+                        ${isAlmostSoldOut ? '<div class="text-danger text-center mt-2 small"><i class="fas fa-exclamation-triangle"></i> Almost sold out! Book now!</div>' : ''}
+                    </div>
+                    
+                    <div class="info-item" style="padding: 15px 0; margin: 10px 0; border-top: 1px solid #eef2f6; border-bottom: 1px solid #eef2f6;">
+                        <div class="info-icon"><i class="fas fa-calendar-check"></i></div>
+                        <div class="info-text"><h4>Date</h4><p>${formatDate(currentEvent.eventTime)}</p></div>
+                    </div>
+                    
+                    <button class="btn-select-seat" onclick="selectSeats()" ${!isUpcoming ? 'disabled' : ''}>
+                        <i class="fas fa-ticket-alt me-2"></i> ${isUpcoming ? 'Select Seats →' : 'Event Ended'}
+                    </button>
+                    
+                    <div class="organizer">
+                        <div class="organizer-logo"><i class="fas fa-building"></i></div>
+                        <div><strong>Organized by</strong><br>TicketMaster Entertainment</div>
+                    </div>
+                </div>
+                
+                <div class="info-card" style="margin-top: 20px;">
+                    <div class="section-title"><i class="fas fa-map-pin"></i> Venue Information</div>
+                    <div class="info-item">
+                        <div class="info-icon"><i class="fas fa-location-dot"></i></div>
+                        <div class="info-text"><h4>Address</h4><p>${escapeHtml(currentEvent.location)}</p></div>
+                    </div>
+                    <div class="map-container">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>View on Google Maps</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById("eventDetail").innerHTML = html;
+}
+
+function selectSeats() {
+    if (!currentUser) {
+        showToast("Please login to select seats!", "error");
+        setTimeout(() => window.location.href = "login.html", 1500);
+        return;
+    }
+    window.location.href = `seats.html?eventId=${eventId}`;
+}
+
+function showToast(msg, type = "success") {
+    const toast = document.createElement("div");
+    toast.className = "toast-notification";
+    toast.style.background = type === "error" ? "#dc3545" : "#0d5bd7";
+    toast.innerHTML = `<i class="fas ${type === 'error' ? 'fa-exclamation-triangle' : 'fa-check-circle'} me-2"></i>${msg}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+// ==================== INIT ====================
+window.addEventListener("DOMContentLoaded", () => {
+    loadUser();
+    loadEventDetail();
+});
+</script>
+</body>
+</html>
