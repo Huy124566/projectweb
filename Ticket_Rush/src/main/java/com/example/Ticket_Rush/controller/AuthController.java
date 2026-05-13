@@ -209,28 +209,44 @@ public class AuthController {
     
     // ========== API ĐĂNG NHẬP BẰNG OTP ==========
 
-    @PostMapping("/send-login-otp")
-    public ResponseEntity<?> sendLoginOtp(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        
-        if (email == null || email.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("❌ Email không được để trống");
-        }
-        
-        if (!userService.existsByEmail(email)) {
-            return ResponseEntity.badRequest().body("❌ Email chưa được đăng ký");
-        }
-        
-        String otp = otpService.generateAndSaveOtp(email);
-        
-        try {
-            emailService.sendOtpEmail(email, otp, "LOGIN");
-            return ResponseEntity.ok(Map.of("message", "✅ Mã OTP đã gửi đến email của bạn"));
-        } catch (Exception e) {
-            otpService.clearOtp(email);
-            return ResponseEntity.internalServerError().body("❌ Gửi email thất bại: " + e.getMessage());
-        }
+    // ========== API OTP ==========
+
+@PostMapping("/send-login-otp")
+public ResponseEntity<?> sendLoginOtp(@RequestBody Map<String, String> request) {
+    System.out.println("=== 🔵 sendLoginOtp START ===");
+    
+    String email = request.get("email");
+    System.out.println("📧 Email received: " + email);
+    
+    if (email == null || email.trim().isEmpty()) {
+        System.out.println("❌ Email is empty");
+        return ResponseEntity.badRequest().body("❌ Email không được để trống");
     }
+    
+    System.out.println("🔍 Checking if email exists...");
+    if (!userService.existsByEmail(email)) {
+        System.out.println("❌ Email NOT registered: " + email);
+        return ResponseEntity.badRequest().body("❌ Email chưa được đăng ký");
+    }
+    
+    System.out.println("✅ Email exists, generating OTP...");
+    String otp = otpService.generateAndSaveOtp(email);
+    System.out.println("🔐 OTP generated: " + otp);
+    
+    System.out.println("📧 Attempting to send email...");
+    try {
+        emailService.sendOtpEmail(email, otp, "LOGIN");
+        System.out.println("✅ Email sent successfully!");
+        return ResponseEntity.ok(Map.of("message", "✅ Mã OTP đã gửi đến email của bạn"));
+    } catch (Exception e) {
+        System.out.println("❌ Email ERROR: " + e.getMessage());
+        e.printStackTrace();
+        otpService.clearOtp(email);
+        return ResponseEntity.internalServerError().body("❌ Gửi email thất bại: " + e.getMessage());
+    } finally {
+        System.out.println("=== 🔵 sendLoginOtp END ===");
+    }
+}
 
     @PostMapping("/login-otp")
     public ResponseEntity<?> loginWithOtp(@RequestBody Map<String, String> request) {
