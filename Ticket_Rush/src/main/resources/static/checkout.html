@@ -353,7 +353,7 @@
 	}
 	
 	// ==================== PAYMENT ====================
-	async function confirmPayment() {
+async function confirmPayment() {
     if (!currentUser) {
         showToast("Please login to continue!", "error");
         setTimeout(() => window.location.href = "login.html", 1500);
@@ -365,7 +365,11 @@
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
 
+    const userEmail = currentUser.email;
+
     try {
+        const ticketIds = [];
+
         for (const seat of cart) {
             const response = await fetch(`${API_BASE}/seats/checkout?seatId=${seat.id}&userId=${currentUser.id}`, {
                 method: "POST"
@@ -375,16 +379,35 @@
                 const error = await response.text();
                 throw new Error(`Failed to book seat: ${error}`);
             }
+
+            const ticket = await response.json();
+            ticketIds.push(ticket.id);
         }
 
-        // Thành công
+        // Gửi email cho từng vé
+        for (const ticketId of ticketIds) {
+            try {
+                const emailResponse = await fetch(`${API_BASE}/tickets/${ticketId}/send-email`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: userEmail })
+                });
+                
+                if (emailResponse.ok) {
+                    console.log(`✅ Ticket ${ticketId} sent to ${userEmail}`);
+                } else {
+                    console.error(`Failed to send email for ticket ${ticketId}`);
+                }
+            } catch (emailError) {
+                console.error("Email sending error:", emailError);
+            }
+        }
+
         clearAllStorage();
         clearInterval(countdownInterval);
-        
-        // 🔥 THÊM DÒNG NÀY ĐỂ BÁO CHO SEATS.HTML XÓA CART
         sessionStorage.setItem("payment_success", "true");
         
-        showToast("✅ Payment successful! Tickets have been booked.", "success");
+        showToast("✅ Payment successful! Tickets have been sent to your email.", "success");
 
         setTimeout(() => {
             window.location.href = "my-tickets.html";

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -44,6 +45,7 @@ public class AdminController {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final SeatService seatService;
+    private final SimpMessagingTemplate messagingTemplate; // 🔥 THÊM DÒNG NÀY
 
     // ==================== DASHBOARD STATS ====================
     @GetMapping("/stats")
@@ -65,6 +67,18 @@ public class AdminController {
         stats.put("occupancyRate", Math.round(occupancyRate));
         
         return ResponseEntity.ok(stats);
+    }
+
+    // 🔥 GỬI REALTIME UPDATE SAU KHI THAY ĐỔI
+    private void broadcastDashboardUpdate() {
+        try {
+            // Lấy dữ liệu mới nhất
+            Map<String, Object> stats = getDashboardStats().getBody();
+            messagingTemplate.convertAndSend("/topic/admin-stats", stats);
+            System.out.println("📡 Real-time update sent to all admins");
+        } catch (Exception e) {
+            System.err.println("Failed to broadcast update: " + e.getMessage());
+        }
     }
 
     // ==================== REVENUE OVER TIME ====================
@@ -102,7 +116,6 @@ public class AdminController {
     public ResponseEntity<Map<String, Object>> getDemographics() {
         Map<String, Object> demographics = new HashMap<>();
         
-        // Gender stats
         long maleCount = userRepository.countByGender("male");
         long femaleCount = userRepository.countByGender("female");
         long otherCount = userRepository.countByGender("other");
@@ -113,7 +126,6 @@ public class AdminController {
         genderStats.put("other", otherCount);
         demographics.put("gender", genderStats);
         
-        // Age group stats
         Map<String, Long> ageStats = new HashMap<>();
         ageStats.put("18-24", userRepository.countByAgeBetween(18, 24));
         ageStats.put("25-34", userRepository.countByAgeBetween(25, 34));
@@ -133,7 +145,9 @@ public class AdminController {
     @PostMapping("/events")
     public ResponseEntity<Event> createEvent(@RequestBody Event event) {
         event.setCreatedAt(LocalDateTime.now());
-        return ResponseEntity.ok(eventRepository.save(event));
+        Event saved = eventRepository.save(event);
+        broadcastDashboardUpdate(); // 🔥 GỬI REALTIME
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/events/{id}")
@@ -146,12 +160,15 @@ public class AdminController {
         existing.setImageUrl(event.getImageUrl());
         existing.setCategory(event.getCategory());
         existing.setMinPrice(event.getMinPrice());
-        return ResponseEntity.ok(eventRepository.save(existing));
+        Event saved = eventRepository.save(existing);
+        broadcastDashboardUpdate(); // 🔥 GỬI REALTIME
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/events/{id}")
     public ResponseEntity<String> deleteEvent(@PathVariable Long id) {
         eventRepository.deleteById(id);
+        broadcastDashboardUpdate(); // 🔥 GỬI REALTIME
         return ResponseEntity.ok("Event deleted");
     }
 
@@ -169,6 +186,7 @@ public class AdminController {
             @RequestParam BigDecimal defaultPrice
     ) {
         seatService.generateSeats(eventId, rows, cols, defaultPrice);
+        broadcastDashboardUpdate(); // 🔥 GỬI REALTIME
         return ResponseEntity.ok("Seats generated successfully");
     }
 
@@ -179,7 +197,9 @@ public class AdminController {
     ) {
         Seat seat = seatRepository.findById(seatId).orElseThrow();
         seat.setPrice(price);
-        return ResponseEntity.ok(seatRepository.save(seat));
+        Seat saved = seatRepository.save(seat);
+        broadcastDashboardUpdate(); // 🔥 GỬI REALTIME
+        return ResponseEntity.ok(saved);
     }
 
     // ==================== TICKET STATS PER EVENT ====================
@@ -198,7 +218,8 @@ public class AdminController {
         
         return ResponseEntity.ok(stats);
     }
- // ==================== USER MANAGEMENT ====================
+
+    // ==================== USER MANAGEMENT ====================
     @GetMapping("/users")
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userRepository.findAll());
@@ -209,12 +230,15 @@ public class AdminController {
         String newRole = body.get("role");
         User user = userRepository.findById(id).orElseThrow();
         user.setRole(UserRole.valueOf(newRole));
-        return ResponseEntity.ok(userRepository.save(user));
+        User saved = userRepository.save(user);
+        broadcastDashboardUpdate(); // 🔥 GỬI REALTIME
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/users/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable Long id) {
         userRepository.deleteById(id);
+        broadcastDashboardUpdate(); // 🔥 GỬI REALTIME
         return ResponseEntity.ok("User deleted");
     }
 }

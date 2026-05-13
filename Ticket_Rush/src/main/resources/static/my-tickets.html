@@ -3,46 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TicketRush - My Tickets</title>
+    <title>ticketmaster - My Tickets</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #f5f7fa; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
         
-        .header { background: #0d5bd7; padding: 14px 40px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-        .logo { font-size: 1.5rem; font-weight: 700; color: white; text-decoration: none; cursor: pointer; }
-        .logo i { margin-right: 6px; }
-        .user-menu { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.15); padding: 6px 16px; border-radius: 40px; cursor: pointer; color: white; }
-        .avatar-sm { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid white; background: #e8f0fe; }
+        /* Header - Glassmorphism */
+        .header { 
+            background: rgba(13, 91, 215, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 10px 40px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 15px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 100;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+        }
+        .logo { 
+            font-size: 1.3rem; 
+            font-weight: 700; 
+            color: white; 
+            text-decoration: none; 
+            cursor: pointer;
+            letter-spacing: -0.5px;
+        }
+        .logo i { margin-right: 8px; font-size: 1.2rem; }
+        .user-menu { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            background: rgba(255,255,255,0.15); 
+            padding: 5px 14px; 
+            border-radius: 40px; 
+            cursor: pointer; 
+            color: white;
+            transition: background 0.2s;
+        }
+        .user-menu:hover { background: rgba(255,255,255,0.25); }
+        .avatar-sm { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid white; background: #e8f0fe; }
         
-        .dropdown-menu-custom { position: absolute; right: 40px; top: 70px; width: 260px; background: white; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); display: none; z-index: 1000; animation: fadeIn 0.2s ease; }
+        .dropdown-menu-custom { 
+            position: absolute; 
+            right: 40px; 
+            top: 60px; 
+            width: 260px; 
+            background: white; 
+            border-radius: 16px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15); 
+            display: none; 
+            z-index: 1000; 
+            animation: fadeIn 0.2s ease;
+        }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .menu-item { padding: 12px 18px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 12px; }
+        .menu-item { padding: 12px 18px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 12px; font-size: 14px; }
         .menu-item:hover { background: #f5f5f5; }
         .menu-item.active { background: #e8f0fe; color: #0d5bd7; border-left: 3px solid #0d5bd7; }
         .logout { color: #dc3545; }
         
-        .tickets-container { max-width: 1000px; margin: 40px auto; padding: 0 30px; animation: fadeInUp 0.4s ease; }
+        /* Container */
+        .tickets-container { 
+            max-width: 1000px; 
+            margin: 48px auto 60px; 
+            padding: 0 30px; 
+            animation: fadeInUp 0.4s ease; 
+        }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
-        .page-header { background: linear-gradient(135deg, #0d5bd7, #0a4ab3); border-radius: 20px; padding: 30px; color: white; margin-bottom: 30px; }
-        .page-header h1 { margin-bottom: 8px; font-weight: 700; }
+        /* Page Header */
+        .page-header { 
+            background: linear-gradient(135deg, #0d5bd7, #0a4ab3); 
+            border-radius: 20px; 
+            padding: 28px 32px; 
+            color: white; 
+            margin-bottom: 40px;
+        }
+        .page-header h1 { margin-bottom: 6px; font-weight: 700; font-size: 1.8rem; }
+        .page-header p { opacity: 0.85; font-size: 0.9rem; }
         
-        .ticket-card { background: white; border-radius: 16px; margin-bottom: 16px; padding: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: 0.2s; cursor: pointer; }
-        .ticket-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-        .ticket-card.upcoming { border-left: 4px solid #0d5bd7; }
-        .ticket-card.past { opacity: 0.7; border-left: 4px solid #ccc; }
+        /* Ticket Card */
+        .ticket-card { 
+            background: white; 
+            border-radius: 20px; 
+            margin-bottom: 24px; 
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+        .ticket-card:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 12px 28px rgba(0,0,0,0.1); 
+        }
         
-        .btn-qr { background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 40px; cursor: pointer; transition: 0.2s; font-weight: 500; }
-        .btn-qr:hover { background: #218838; transform: scale(1.02); }
+        /* Ticket Inner */
+        .ticket-inner {
+            display: flex;
+            flex-wrap: wrap;
+        }
         
-        .ticket-status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-top: 10px; }
-        .status-upcoming { background: #e8f0fe; color: #0d5bd7; }
-        .status-past { background: #f0f0f0; color: #999; }
+        /* Phần thông tin chính */
+        .ticket-info {
+            flex: 2;
+            padding: 24px;
+            position: relative;
+        }
         
-        .qr-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 2000; }
-        .qr-content { background: white; border-radius: 24px; padding: 30px; text-align: center; max-width: 350px; animation: popIn 0.3s ease; }
+        /* Phần QR Code */
+        .ticket-qr-section {
+            flex: 1;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            min-width: 140px;
+        }
+        
+        /* Đường đứt đoạn dọc phân cách */
+        .ticket-info::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 20px;
+            bottom: 20px;
+            width: 2px;
+            background: repeating-linear-gradient(0deg, #e2e8f0, #e2e8f0 8px, transparent 8px, transparent 16px);
+        }
+        
+        /* Trạng thái vé */
+        .ticket-status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .status-upcoming { 
+            background: #e8f0fe; 
+            color: #0d5bd7;
+            border: 1px solid #c7daf5;
+        }
+        .status-past { 
+            background: #f1f5f9; 
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .event-name {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        
+        .event-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin: 12px 0;
+            font-size: 13px;
+            color: #475569;
+        }
+        .event-details i {
+            width: 18px;
+            color: #0d5bd7;
+            margin-right: 6px;
+            font-size: 13px;
+        }
+        
+        /* Số ghế - Góc trên bên phải */
+        .seat-badge {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            background: #0d5bd7;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(13,91,215,0.3);
+        }
+        
+        .btn-qr { 
+            background: #28a745; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 40px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            font-weight: 600;
+            font-size: 13px;
+            width: 100%;
+        }
+        .btn-qr:hover { 
+            background: #218838; 
+            transform: scale(1.02); 
+        }
+        
+        .qr-hint {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        /* Past event - làm mờ */
+        .ticket-card.past {
+            opacity: 0.75;
+        }
+        .ticket-card.past .seat-badge {
+            background: #94a3b8;
+            box-shadow: none;
+        }
+        .ticket-card.past .event-details i {
+            color: #94a3b8;
+        }
+        
+        /* QR Modal */
+        .qr-modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.85); 
+            backdrop-filter: blur(8px);
+            justify-content: center; 
+            align-items: center; 
+            z-index: 2000; 
+        }
+        .qr-content { 
+            background: white; 
+            border-radius: 28px; 
+            padding: 32px; 
+            text-align: center; 
+            max-width: 360px; 
+            animation: popIn 0.3s ease; 
+        }
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .qr-content img { width: 200px; height: 200px; margin: 20px 0; border-radius: 16px; }
         
@@ -53,14 +264,22 @@
         .empty-state { text-align: center; padding: 60px; background: white; border-radius: 20px; }
         .empty-state i { font-size: 64px; color: #cbd5e1; margin-bottom: 20px; }
         
-        @media (max-width: 768px) { .header, .tickets-container { padding: 12px 20px; } .ticket-card { flex-direction: column; text-align: center; } }
+        @media (max-width: 768px) { 
+            .header { padding: 10px 20px; }
+            .tickets-container { padding: 0 20px; margin: 32px auto 40px; }
+            .ticket-inner { flex-direction: column; }
+            .ticket-info::after { display: none; }
+            .ticket-qr-section { border-top: 2px dashed #e2e8f0; }
+            .seat-badge { position: static; margin-top: 12px; display: inline-block; }
+            .event-name { padding-right: 0; }
+        }
     </style>
 </head>
 <body>
 
 <div class="header">
     <div class="logo" onclick="window.location.href='index.html'">
-        <i class="fas fa-ticket-alt"></i> TicketRush
+        <i class="fas fa-ticket-alt"></i> ticketmaster
     </div>
     <div id="auth-area"></div>
 </div>
@@ -68,7 +287,7 @@
 <div class="tickets-container">
     <div class="page-header">
         <h1><i class="fas fa-ticket-alt me-2"></i> My Tickets</h1>
-        <p class="mb-0 opacity-75">Your purchased tickets will appear here</p>
+        <p class="mb-0">Your purchased tickets will appear here</p>
     </div>
     <div id="ticketsList">
         <div class="loading">
@@ -110,7 +329,6 @@ function renderAuthUI() {
     const area = document.getElementById("auth-area");
     const isAdmin = currentUser.role === "ROLE_ADMIN";
     
-    // ✅ LẤY AVATAR TỪ CURRENT USER
     let avatarUrl = currentUser.avatar;
     if (!avatarUrl || avatarUrl === "https://i.pravatar.cc/150" || avatarUrl === "") {
         avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username}`;
@@ -164,8 +382,6 @@ async function loadTickets() {
     }
     
     try {
-        console.log("Loading tickets for user ID:", currentUser.id);
-        
         const response = await fetch(`${API_BASE}/tickets/user/${currentUser.id}`);
         
         if (!response.ok) {
@@ -184,7 +400,6 @@ async function loadTickets() {
         }
         
         const tickets = await response.json();
-        console.log("Tickets received:", tickets);
         
         if (!tickets || tickets.length === 0) {
             container.innerHTML = `
@@ -235,32 +450,39 @@ function renderTickets(tickets) {
         const isUpcoming = eventDate > new Date();
         const statusClass = isUpcoming ? "upcoming" : "past";
         const statusText = isUpcoming ? "Upcoming" : "Past Event";
-        const statusBadgeClass = isUpcoming ? "status-upcoming" : "status-past";
         
-        const seatLabel = ticket.seatNumber || ticket.seatId || `Seat #${ticket.seatId || '?'}`;
+        const seatLabel = ticket.seatNumber || ticket.seatId || `Seat ${ticket.seatId || '?'}`;
         const eventName = ticket.eventName || `Event #${ticket.eventId || '?'}`;
         const venue = ticket.eventVenue || ticket.venue || "Venue TBA";
         const orderNumber = ticket.orderNumber || ticket.bookingCode || `TKT-${ticket.id}`;
         
+        const eventTime = ticket.eventDate ? new Date(ticket.eventDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'Time TBA';
+        
         html += `
             <div class="ticket-card ${statusClass}">
-                <div style="flex: 1;">
-                    <h5 class="mb-1 fw-bold" style="color: #1a2a3a;">${escapeHtml(eventName)}</h5>
-                    <div class="text-muted small mt-1">
-                        <i class="fas fa-map-marker-alt me-1" style="width: 16px;"></i> ${escapeHtml(venue)}
+                <div class="ticket-inner">
+                    <div class="ticket-info">
+                        <div class="ticket-status-badge ${isUpcoming ? 'status-upcoming' : 'status-past'}">
+                            ${statusText}
+                        </div>
+                        <div class="seat-badge">
+                            <i class="fas fa-chair me-1"></i> ${escapeHtml(seatLabel)}
+                        </div>
+                        <div class="event-name">${escapeHtml(eventName)}</div>
+                        <div class="event-details">
+                            <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(venue)}</span>
+                            <span><i class="far fa-calendar-alt"></i> ${formattedDate}</span>
+                            <span><i class="far fa-clock"></i> ${eventTime}</span>
+                        </div>
                     </div>
-                    <div class="text-muted small mt-1">
-                        <i class="far fa-calendar-alt me-1" style="width: 16px;"></i> ${formattedDate}
+                    <div class="ticket-qr-section">
+                        <button class="btn-qr" onclick="showQR('${escapeHtml(eventName)}', '${escapeHtml(seatLabel)}', '${escapeHtml(orderNumber)}', ${ticket.id})">
+                            <i class="fas fa-qrcode me-2"></i> QR Code
+                        </button>
+                        <div class="qr-hint">
+                            <i class="fas fa-info-circle"></i> Scan to enter
+                        </div>
                     </div>
-                    <div class="mt-2">
-                        <span class="badge bg-primary px-3 py-2 rounded-pill">${escapeHtml(seatLabel)}</span>
-                        <span class="ticket-status ${statusBadgeClass} ms-2">${statusText}</span>
-                    </div>
-                </div>
-                <div>
-                    <button class="btn-qr" onclick="showQR('${escapeHtml(eventName)}', '${escapeHtml(seatLabel)}', '${escapeHtml(orderNumber)}')">
-                        <i class="fas fa-qrcode me-1"></i> QR Code
-                    </button>
                 </div>
             </div>
         `;
@@ -269,8 +491,10 @@ function renderTickets(tickets) {
     container.innerHTML = html;
 }
 
-function showQR(eventName, seat, orderId) {
-    const qrData = `TICKET:${eventName}|SEAT:${seat}|ORDER:${orderId}|TIME:${Date.now()}`;
+// ==================== SHOW QR CODE - DÙNG DỮ LIỆU CỐ ĐỊNH ====================
+function showQR(eventName, seat, orderId, ticketId) {
+    // Sử dụng orderNumber và ticketId làm dữ liệu cố định, không dùng Date.now()
+    const qrData = `TICKET:${eventName}|SEAT:${seat}|ORDER:${orderId}|ID:${ticketId}`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
     
     document.getElementById("qrImage").src = qrUrl;

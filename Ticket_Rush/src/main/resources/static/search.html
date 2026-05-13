@@ -3,29 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TicketMaster - Search Results</title>
+    <title>ticketmaster - Search Results</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
         
-        /* Header */
         .header { background: #0d5bd7; padding: 14px 40px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
-        .logo { font-size: 1.5rem; font-weight: 700; color: white; text-decoration: none; cursor: pointer; transition: opacity 0.2s; }
-        .logo:hover { opacity: 0.9; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: white; text-decoration: none; cursor: pointer; }
         .logo i { margin-right: 8px; }
-        .user-menu { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.15); padding: 6px 16px; border-radius: 40px; cursor: pointer; transition: 0.2s; color: white; }
+        .user-menu { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.15); padding: 6px 16px; border-radius: 40px; cursor: pointer; color: white; }
         .user-menu:hover { background: rgba(255,255,255,0.25); }
         .avatar-sm { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
         
-        .dropdown-menu-custom { position: absolute; right: 40px; top: 70px; width: 260px; background: white; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); display: none; z-index: 1000; overflow: hidden; animation: fadeIn 0.2s ease; }
+        .dropdown-menu-custom { position: absolute; right: 40px; top: 70px; width: 260px; background: white; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); display: none; z-index: 1000; animation: fadeIn 0.2s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .menu-item { padding: 12px 18px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 12px; font-size: 14px; }
         .menu-item:hover { background: #f5f5f5; }
+        .menu-item.active { background: #e8f0fe; color: #0d5bd7; border-left: 3px solid #0d5bd7; }
         .logout { color: #dc3545; }
         
-        /* Search Bar */
         .search-section { background: linear-gradient(135deg, #0d5bd7 0%, #0a4ab3 100%); padding: 25px 0; }
         .search-container { max-width: 1200px; margin: 0 auto; padding: 0 30px; }
         .search-wrapper { background: white; border-radius: 60px; padding: 5px; display: flex; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.15); transition: 0.2s; }
@@ -38,10 +36,8 @@
         .search-btn { background: #0d5bd7; border: none; padding: 14px 32px; border-radius: 50px; color: white; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: 0.2s; cursor: pointer; }
         .search-btn:hover { background: #0a4ab3; transform: scale(1.02); }
         
-        /* Main Content */
         .main-content { max-width: 1200px; margin: 40px auto; padding: 0 30px; display: flex; gap: 40px; flex-wrap: wrap; }
         
-        /* Sidebar */
         .sidebar { flex: 1.2; min-width: 240px; }
         .suggestions-card { background: white; border-radius: 20px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); margin-bottom: 24px; border: 1px solid #eef2f6; }
         .suggestions-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: #1a2a3a; }
@@ -54,7 +50,6 @@
         .ad-card { background: linear-gradient(135deg, #f8f9fc, #f1f5f9); border-radius: 20px; padding: 24px; text-align: center; border: 1px solid #eef2f6; }
         .ad-card i { font-size: 32px; color: #0d5bd7; margin-bottom: 12px; }
         
-        /* Results Area */
         .results-area { flex: 3; min-width: 280px; }
         .results-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 24px; flex-wrap: wrap; gap: 15px; }
         .result-count { font-size: 14px; font-weight: 600; color: #2c3e50; background: #f1f5f9; padding: 6px 14px; border-radius: 30px; }
@@ -62,7 +57,6 @@
         .sort-box span { font-size: 13px; color: #6c7a8a; }
         .sort-select { border: 1px solid #e2e8f0; border-radius: 30px; padding: 8px 16px; background: white; font-size: 13px; cursor: pointer; outline: none; }
         
-        /* Event Cards - With Image */
         .event-card { background: white; border-radius: 20px; overflow: hidden; margin-bottom: 20px; border: 1px solid #eef2f6; cursor: pointer; transition: all 0.3s ease; display: flex; gap: 0; }
         .event-card:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(0,0,0,0.08); border-color: #e0e7ff; }
         .event-card-image { width: 140px; min-width: 140px; height: 140px; object-fit: cover; background: #e8f0fe; }
@@ -76,19 +70,18 @@
         .btn-ticket { background: #0d5bd7; color: white; border: none; padding: 8px 24px; border-radius: 40px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap; }
         .btn-ticket:hover { background: #0a4ab3; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(13,91,215,0.3); }
         
-        /* Pagination */
         .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 40px; flex-wrap: wrap; }
         .page-btn { min-width: 40px; height: 40px; padding: 0 12px; border: 1px solid #e2e8f0; background: white; border-radius: 12px; cursor: pointer; transition: 0.2s; font-weight: 500; }
         .page-btn:hover { border-color: #0d5bd7; color: #0d5bd7; transform: translateY(-2px); }
         .page-btn.active { background: #0d5bd7; border-color: #0d5bd7; color: white; }
         
-        /* Loading & No Results */
         .loading-container { text-align: center; padding: 80px 20px; background: white; border-radius: 24px; }
         .spinner-custom { width: 50px; height: 50px; border: 3px solid #e2e8f0; border-top-color: #0d5bd7; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .no-results { text-align: center; padding: 60px 20px; background: white; border-radius: 24px; }
         .no-results i { font-size: 48px; color: #cbd5e1; margin-bottom: 20px; }
         .no-results h5 { font-size: 1.2rem; margin-bottom: 8px; color: #1a2a3a; }
+        .filter-warning { background: #fff3cd; color: #856404; padding: 8px 15px; border-radius: 8px; font-size: 12px; margin-bottom: 15px; display: inline-block; }
         
         mark { background: #ffe6b3; padding: 0 3px; border-radius: 3px; }
         
@@ -174,13 +167,14 @@
             <div class="result-count" id="resultCount">0 events found</div>
             <div class="sort-box">
                 <span>Sort by:</span>
-                <select id="sortSelect" class="sort-select" onchange="searchEvents(0)">
+                <select id="sortSelect" class="sort-select">
                     <option value="relevance">Relevance</option>
                     <option value="date">Date</option>
                     <option value="price">Price</option>
                 </select>
             </div>
         </div>
+        <div id="filterWarning" class="filter-warning" style="display: none;"></div>
         <div id="eventsContainer">
             <div class="loading-container">
                 <div class="spinner-custom"></div>
@@ -197,63 +191,49 @@
 
 <script>
 const API_BASE = "http://localhost:8082";
+const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1459749411172-04bfb1be6b2a?w=140&h=140&fit=crop';
 let currentUser = null;
 let currentPage = 0;
 let currentKeyword = "";
 let totalPages = 0;
 let searchDebounceTimer;
+let filterWarningShown = false;
 
-// Helper function to calculate date range based on filter
-function getDateRangeFromFilter(filter) {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    let fromDate = null;
-    let toDate = null;
+// ==================== MÃ CỜ CÁC NƯỚC ====================
+function getFlagCode(teamName) {
+    const flagMap = {
+        'usa': 'us', 'mexico': 'mx', 'brazil': 'br', 'germany': 'de',
+        'argentina': 'ar', 'france': 'fr', 'england': 'gb-eng', 'spain': 'es',
+        'portugal': 'pt', 'netherlands': 'nl', 'italy': 'it', 'belgium': 'be',
+        'japan': 'jp', 'south-korea': 'kr', 'austria': 'at'
+    };
+    return flagMap[teamName] || 'un';
+}
+
+// ==================== LẤY ẢNH HIỂN THỊ ====================
+function getEventImage(event) {
+    const imageUrl = event.image_url || event.imageUrl;
     
-    switch(filter) {
-        case 'today':
-            fromDate = today;
-            toDate = new Date(today.getTime() + 24 * 60 * 60 * 1000);
-            break;
-        case 'week':
-            fromDate = today;
-            toDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-            break;
-        case 'month':
-            fromDate = today;
-            toDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-            break;
-        case 'upcoming':
-            fromDate = today;
-            toDate = new Date(today.getTime() + 365 * 24 * 60 * 60 * 1000);
-            break;
-        default:
-            fromDate = null;
-            toDate = null;
+    const isComponent = imageUrl && 
+                        !imageUrl.includes('/') && 
+                        !imageUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+    
+    if (isComponent) {
+        const teamName = imageUrl.split('-')[0];
+        const flagCode = getFlagCode(teamName);
+        return `https://flagcdn.com/w160/${flagCode}.png`;
     }
     
-    return { fromDate, toDate };
-}
-
-// Format date for API (ISO format)
-function formatDateForAPI(date) {
-    if (!date) return null;
-    return date.toISOString();
-}
-
-// High quality fallback images by category
-const FALLBACK_IMAGES = {
-    'CONCERT': 'https://images.unsplash.com/photo-1501618669935-18b6ecb13d6d?w=140&h=140&fit=crop',
-    'SPORTS': 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=140&h=140&fit=crop',
-    'THEATRE': 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=140&h=140&fit=crop',
-    'FAMILY': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=140&h=140&fit=crop',
-    'COMEDY': 'https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=140&h=140&fit=crop'
-};
-const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1459749411172-04bfb1be6b2a?w=140&h=140&fit=crop';
-
-function getEventImage(event) {
-    if (event.imageUrl && event.imageUrl.trim() !== '') return event.imageUrl;
+    if (imageUrl && imageUrl.trim() !== '') return imageUrl;
+    
     const category = event.category || 'CONCERT';
+    const FALLBACK_IMAGES = {
+        'CONCERT': 'https://images.unsplash.com/photo-1501618669935-18b6ecb13d6d?w=140&h=140&fit=crop',
+        'SPORTS': 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=140&h=140&fit=crop',
+        'THEATRE': 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=140&h=140&fit=crop',
+        'FAMILY': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=140&h=140&fit=crop',
+        'COMEDY': 'https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=140&h=140&fit=crop'
+    };
     return FALLBACK_IMAGES[category] || DEFAULT_IMAGE;
 }
 
@@ -276,8 +256,8 @@ function renderAuthUI() {
         }
         area.innerHTML = `
             <div class="user-menu" onclick="toggleMenu(event)">
-                <img src="${avatarUrl}" class="avatar-sm" onerror="this.src='https://i.pravatar.cc/40?img=${currentUser.username.length}'">
-                <span>${currentUser.username}</span>
+                <img src="${avatarUrl}" class="avatar-sm" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username}'">
+                <span>${escapeHtml(currentUser.username)}</span>
                 <i class="fas fa-chevron-down"></i>
             </div>
             <div id="dropdownMenu" class="dropdown-menu-custom">
@@ -310,6 +290,36 @@ function highlightText(text, keyword) {
     } catch(e) { return text; }
 }
 
+function getDateRangeFromFilter(filter) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let fromDate = null;
+    let toDate = null;
+    
+    switch(filter) {
+        case 'today':
+            fromDate = today;
+            toDate = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+            break;
+        case 'week':
+            fromDate = today;
+            toDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+            break;
+        case 'month':
+            fromDate = today;
+            toDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+            break;
+        case 'upcoming':
+            fromDate = today;
+            toDate = new Date(today.getTime() + 365 * 24 * 60 * 60 * 1000);
+            break;
+        default:
+            fromDate = null;
+            toDate = null;
+    }
+    return { fromDate, toDate };
+}
+
 // ==================== SEARCH ====================
 const keywordInput = document.getElementById("keywordInput");
 const locationInput = document.getElementById("locationInput");
@@ -318,12 +328,15 @@ const sortSelect = document.getElementById("sortSelect");
 const eventsContainer = document.getElementById("eventsContainer");
 const resultCountSpan = document.getElementById("resultCount");
 const paginationDiv = document.getElementById("pagination");
+const filterWarning = document.getElementById("filterWarning");
 
 async function searchEvents(page = 0) {
     currentPage = page;
     currentKeyword = keywordInput.value.trim();
     const location = locationInput.value.trim();
     const dateFilter = dateSelect.value;
+    filterWarningShown = false;
+    filterWarning.style.display = "none";
     
     if (!currentKeyword && !location) {
         eventsContainer.innerHTML = `<div class="loading-container"><i class="fas fa-search fa-3x text-muted mb-3"></i><h5>Enter a keyword to search</h5><p class="text-muted">Search for concerts, sports, theatre and more</p></div>`;
@@ -335,38 +348,55 @@ async function searchEvents(page = 0) {
     eventsContainer.innerHTML = `<div class="loading-container"><div class="spinner-custom"></div><p>Searching for "${escapeHtml(currentKeyword || location)}"...</p></div>`;
     
     try {
-        // Build URL with filters
-        let url = `${API_BASE}/events/search?keyword=${encodeURIComponent(currentKeyword)}&page=${page}&size=10`;
-        
-        // Add location filter if present
-        if (location) {
-            url += `&location=${encodeURIComponent(location)}`;
-        }
-        
-        // Add date filter if present
-        const { fromDate, toDate } = getDateRangeFromFilter(dateFilter);
-        if (fromDate && toDate) {
-            url += `&fromDate=${encodeURIComponent(formatDateForAPI(fromDate))}&toDate=${encodeURIComponent(formatDateForAPI(toDate))}`;
-        }
-        
-        console.log("Search URL:", url);
+        let url = `${API_BASE}/events/search?keyword=${encodeURIComponent(currentKeyword)}&page=${page}&size=20`;
         
         const response = await fetch(url);
         
-        if (!response.ok) throw new Error("Search failed");
+        if (!response.ok) {
+            throw new Error("Search failed");
+        }
         
         const data = await response.json();
         let events = data.content || [];
         totalPages = data.totalPages || 0;
-        const totalElements = data.totalElements || 0;
         
-        // Additional client-side date filtering if needed (fallback)
-        if (dateFilter && fromDate && toDate && events.length > 0) {
+        // Client-side filtering for location
+        if (location && events.length > 0) {
+            const locationLower = location.toLowerCase();
+            const originalCount = events.length;
+            events = events.filter(event => {
+                const eventLocation = (event.location || event.venue || "").toLowerCase();
+                return eventLocation.includes(locationLower);
+            });
+            if (originalCount !== events.length && !filterWarningShown) {
+                filterWarning.innerHTML = '<i class="fas fa-info-circle me-1"></i> Location filter applied locally. Results may be limited.';
+                filterWarning.style.display = "block";
+                filterWarningShown = true;
+            }
+        }
+        
+        // Client-side filtering for date
+        const { fromDate, toDate } = getDateRangeFromFilter(dateFilter);
+        if (fromDate && toDate && events.length > 0) {
+            const originalCount = events.length;
             events = events.filter(event => {
                 if (!event.eventTime) return false;
                 const eventDate = new Date(event.eventTime);
                 return eventDate >= fromDate && eventDate <= toDate;
             });
+            if (originalCount !== events.length && !filterWarningShown) {
+                filterWarning.innerHTML = '<i class="fas fa-info-circle me-1"></i> Date filter applied locally. Results may be limited.';
+                filterWarning.style.display = "block";
+                filterWarningShown = true;
+            }
+        }
+        
+        // Sort events
+        const sortBy = sortSelect.value;
+        if (sortBy === 'date') {
+            events.sort((a, b) => new Date(a.eventTime) - new Date(b.eventTime));
+        } else if (sortBy === 'price') {
+            events.sort((a, b) => (a.minPrice || 0) - (b.minPrice || 0));
         }
         
         resultCountSpan.innerHTML = `${events.length} ${events.length === 1 ? 'event' : 'events'} found for "${escapeHtml(currentKeyword || location)}"`;
@@ -377,11 +407,6 @@ async function searchEvents(page = 0) {
                     <i class="far fa-frown"></i>
                     <h5>No events found</h5>
                     <p class="text-muted">Try different keywords or check your spelling</p>
-                    <div class="mt-3">
-                        <span class="badge bg-secondary me-2 mb-2" style="cursor:pointer;" onclick="quickSearch('Concert')">🎤 Concert</span>
-                        <span class="badge bg-secondary me-2 mb-2" style="cursor:pointer;" onclick="quickSearch('Sports')">⚽ Sports</span>
-                        <span class="badge bg-secondary me-2 mb-2" style="cursor:pointer;" onclick="quickSearch('Theatre')">🎭 Theatre</span>
-                    </div>
                 </div>
             `;
             paginationDiv.innerHTML = "";
@@ -464,7 +489,6 @@ function renderPagination() {
     paginationDiv.innerHTML = html;
 }
 
-// ==================== SUGGESTIONS ====================
 async function fetchSuggestions(keyword) {
     if (!keyword.trim()) {
         document.getElementById("suggestionsList").innerHTML = '<div class="text-muted small">Start typing to see suggestions...</div>';
@@ -510,20 +534,24 @@ keywordInput.addEventListener("input", function(e) {
     
     if (keyword) {
         fetchSuggestions(keyword);
-        searchDebounceTimer = setTimeout(() => searchEvents(0), 400);
+        searchDebounceTimer = setTimeout(() => searchEvents(0), 500);
     } else {
         document.getElementById("suggestionsList").innerHTML = '<div class="text-muted small">Start typing to see suggestions...</div>';
-        searchDebounceTimer = setTimeout(() => searchEvents(0), 100);
+        searchDebounceTimer = setTimeout(() => searchEvents(0), 200);
     }
 });
 
 locationInput.addEventListener("input", function() {
     clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = setTimeout(() => searchEvents(0), 400);
+    searchDebounceTimer = setTimeout(() => searchEvents(0), 500);
 });
 
 dateSelect.addEventListener("change", function() {
     searchEvents(0);
+});
+
+sortSelect.addEventListener("change", function() {
+    searchEvents(currentPage);
 });
 
 keywordInput.addEventListener("keypress", function(e) {
