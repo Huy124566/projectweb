@@ -18,9 +18,9 @@ import com.example.Ticket_Rush.entity.User;
 import com.example.Ticket_Rush.entity.UserRole;
 import com.example.Ticket_Rush.repository.UserRepository;
 import com.example.Ticket_Rush.service.AuthService;
-import com.example.Ticket_Rush.service.EmailService;
 import com.example.Ticket_Rush.service.JwtService;
 import com.example.Ticket_Rush.service.OtpService;
+import com.example.Ticket_Rush.service.ResendEmailService;
 import com.example.Ticket_Rush.service.UserService;
 import com.example.Ticket_Rush.utils.BCryptEncoder;
 
@@ -34,7 +34,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final OtpService otpService;
-    private final EmailService emailService;
+    private final ResendEmailService emailService;
     private final UserService userService;
     private final JwtService jwtService;
     private final BCryptEncoder bcryptEncoder;

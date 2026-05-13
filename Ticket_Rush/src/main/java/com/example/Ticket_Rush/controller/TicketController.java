@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.Ticket_Rush.entity.Ticket;
-import com.example.Ticket_Rush.service.EmailService;
+import com.example.Ticket_Rush.service.ResendEmailService;
 import com.example.Ticket_Rush.service.TicketService;
 
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class TicketController {
 
     private final TicketService ticketService;
-    private final EmailService emailService;
+    private final ResendEmailService emailService;
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Ticket>> getTicketsByUser(@PathVariable Long userId) {
@@ -63,7 +63,7 @@ public class TicketController {
         return ResponseEntity.ok(qrCode);
     }
     
-    // API GỬI VÉ QUA EMAIL
+    // API GỬI VÉ QUA EMAIL (dùng Resend API)
     @PostMapping("/{ticketId}/send-email")
     public ResponseEntity<?> sendTicketEmail(@PathVariable Long ticketId, @RequestBody Map<String, String> request) {
         try {
@@ -80,6 +80,7 @@ public class TicketController {
                 ticket.setQrCodeUrl(newQRCode);
             }
             
+            // Gửi email xác nhận vé
             emailService.sendTicketConfirmation(email, ticket);
             
             return ResponseEntity.ok(Map.of(
