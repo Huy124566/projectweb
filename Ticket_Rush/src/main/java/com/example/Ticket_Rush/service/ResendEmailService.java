@@ -1,6 +1,8 @@
 package com.example.Ticket_Rush.service;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
@@ -27,20 +29,16 @@ public class ResendEmailService {
     @Value("${resend.api.key}")
     private String apiKey;
 
-    private final QRCodeService qrCodeService;
-    
-    // Bỏ final để tránh xung đột với constructor
-    private OkHttpClient client = new OkHttpClient.Builder()
+    private final OkHttpClient client = new OkHttpClient.Builder()
         .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
         .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
         .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
         .build();
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // Constructor
-    public ResendEmailService(QRCodeService qrCodeService) {
-        this.qrCodeService = qrCodeService;
+    public ResendEmailService() {
+        // Constructor mặc định
     }
 
     // ========== PHƯƠNG THỨC GỬI EMAIL CƠ BẢN ==========
@@ -69,7 +67,7 @@ public class ResendEmailService {
                 .post(body)
                 .addHeader("Authorization", "Bearer " + apiKey)
                 .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json")  // Thêm header Accept
+                .addHeader("Accept", "application/json")
                 .build();
 
             try (Response response = client.newCall(request).execute()) {
@@ -89,12 +87,11 @@ public class ResendEmailService {
         }
     }
 
-    // ========== GỬI OTP EMAIL (dùng Switch Expression Java 17+) ==========
+    // ========== GỬI OTP EMAIL ==========
     
     public void sendOtpEmail(String to, String otp, String purpose) {
         log.info("🚀 sendOtpEmail to: {}, purpose: {}", to, purpose);
         
-        // Switch expression Java 17+
         String subject = switch (purpose) {
             case "REGISTER" -> "Verify Your Email - TicketRush";
             case "FORGOT_PASSWORD" -> "Reset Your Password - TicketRush";
@@ -133,83 +130,89 @@ public class ResendEmailService {
         sendEmail(to, subject, htmlContent);
     }
 
-    // ========== GỬI TICKET CONFIRMATION EMAIL (CÓ QR CODE) ==========
+    // ========== GỬI TICKET CONFIRMATION EMAIL (DÙNG URL QR CODE) ==========
     
     public void sendTicketConfirmation(String to, Ticket ticket) {
         log.info("🚀 sendTicketConfirmation to: {}, ticketId: {}", to, ticket.getId());
         
-        String eventDate = ticket.getEventDate() != null 
-            ? ticket.getEventDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) 
-            : "Date TBA";
-        String eventTime = ticket.getEventDate() != null 
-            ? ticket.getEventDate().format(DateTimeFormatter.ofPattern("HH:mm")) 
-            : "Time TBA";
-        
-        // Generate QR Code Base64 (đã bao gồm tiền tố data:image/png;base64,)
-        String qrBase64 = qrCodeService.generateTicketQRCode(
-            ticket.getId(),
-            ticket.getEventName(),
-            ticket.getSeatNumber(),
-            ticket.getOrderNumber()
-        );
-        
-        // QR HTML - đã có tiền tố trong qrBase64, không cần thêm nữa
-        String qrHtml = (qrBase64 != null && !qrBase64.isEmpty()) 
-            ? String.format("""
+        try {
+            String eventDate = ticket.getEventDate() != null 
+                ? ticket.getEventDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) 
+                : "Date TBA";
+            String eventTime = ticket.getEventDate() != null 
+                ? ticket.getEventDate().format(DateTimeFormatter.ofPattern("HH:mm")) 
+                : "Time TBA";
+            
+            // Tạo QR Code URL (dùng QuickChart API - miễn phí, hoạt động tốt trên mọi email client)
+            String qrData = String.format("TICKET_%d_%s_%s", 
+                ticket.getId(), 
+                ticket.getOrderNumber(), 
+                ticket.getSeatNumber()
+            );
+            String encodedData = URLEncoder.encode(qrData, StandardCharsets.UTF_8);
+            String qrUrl = String.format("https://quickchart.io/qr?text=%s&size=250&margin=1", encodedData);
+            
+            log.info("🔗 QR Code URL: {}", qrUrl);
+            
+            String qrHtml = String.format("""
                 <div style="text-align: center; margin: 25px 0;">
-                    <img src="%s" alt="QR Code" 
+                    <img src="%s" alt="Mã QR" 
                          style="display: block; margin: 0 auto; width: 200px; height: 200px; border: 1px solid #eef2f6; border-radius: 12px; padding: 10px;">
-                    <div style="font-size: 12px; color: #888; margin-top: 10px;">🔍 Scan this QR code at the venue entrance</div>
+                    <div style="font-size: 12px; color: #888; margin-top: 10px;">🔍 Quét mã QR tại cửa vào</div>
                 </div>
-                """, qrBase64)
-            : "";
-        
-        String subject = "🎫 Ticket Confirmation - " + ticket.getEventName();
-        
-        String htmlContent = String.format("""
-            <!DOCTYPE html>
-            <html>
-            <head><meta charset="UTF-8"></head>
-            <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f7fa;">
-                <div style="max-width: 550px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden;">
-                    <div style="background: linear-gradient(135deg, #0d5bd7, #0a4ab3); color: white; padding: 25px; text-align: center;">
-                        <h2 style="margin: 0;">🎫 TicketRush</h2>
-                        <p style="margin: 5px 0 0; opacity: 0.9;">Your ticket is ready!</p>
-                    </div>
-                    <div style="padding: 25px;">
-                        <p>Hello,</p>
-                        <p>Your ticket for <strong>%s</strong> has been confirmed.</p>
-                        
-                        <div style="background: #f8f9fc; padding: 15px; border-radius: 12px; margin: 15px 0;">
-                            <p><strong>🎤 Event:</strong> %s</p>
-                            <p><strong>🆔 Order:</strong> %s</p>
-                            <p><strong>💺 Seat:</strong> %s</p>
-                            <p><strong>📍 Venue:</strong> %s</p>
-                            <p><strong>📅 Date:</strong> %s</p>
-                            <p><strong>⏰ Time:</strong> %s</p>
+                """, qrUrl);
+            
+            String subject = "🎫 Ticket Confirmation - " + ticket.getEventName();
+            
+            String htmlContent = String.format("""
+                <!DOCTYPE html>
+                <html>
+                <head><meta charset="UTF-8"></head>
+                <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f7fa;">
+                    <div style="max-width: 550px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden;">
+                        <div style="background: linear-gradient(135deg, #0d5bd7, #0a4ab3); color: white; padding: 25px; text-align: center;">
+                            <h2 style="margin: 0;">🎫 TicketRush</h2>
+                            <p style="margin: 5px 0 0; opacity: 0.9;">Your ticket is ready!</p>
                         </div>
-                        
-                        %s
-                        
-                        <p style="text-align: center; margin-top: 20px;">Thank you for choosing TicketRush! 🎉</p>
+                        <div style="padding: 25px;">
+                            <p>Hello,</p>
+                            <p>Your ticket for <strong>%s</strong> has been confirmed.</p>
+                            
+                            <div style="background: #f8f9fc; padding: 15px; border-radius: 12px; margin: 15px 0;">
+                                <p><strong>🎤 Event:</strong> %s</p>
+                                <p><strong>🆔 Order:</strong> %s</p>
+                                <p><strong>💺 Seat:</strong> %s</p>
+                                <p><strong>📍 Venue:</strong> %s</p>
+                                <p><strong>📅 Date:</strong> %s</p>
+                                <p><strong>⏰ Time:</strong> %s</p>
+                            </div>
+                            
+                            %s
+                            
+                            <p style="text-align: center; margin-top: 20px;">Thank you for choosing TicketRush! 🎉</p>
+                        </div>
+                        <div style="text-align: center; padding: 15px; color: #888; font-size: 12px; border-top: 1px solid #eef2f6;">
+                            <p>&copy; 2025 TicketRush</p>
+                        </div>
                     </div>
-                    <div style="text-align: center; padding: 15px; color: #888; font-size: 12px; border-top: 1px solid #eef2f6;">
-                        <p>&copy; 2025 TicketRush</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """,
-            ticket.getEventName(),
-            ticket.getEventName(),
-            ticket.getOrderNumber(),
-            ticket.getSeatNumber(),
-            ticket.getEventVenue() != null ? ticket.getEventVenue() : "Venue TBA",
-            eventDate,
-            eventTime,
-            qrHtml
-        );
+                </body>
+                </html>
+                """,
+                ticket.getEventName(),
+                ticket.getEventName(),
+                ticket.getOrderNumber(),
+                ticket.getSeatNumber(),
+                ticket.getEventVenue() != null ? ticket.getEventVenue() : "Venue TBA",
+                eventDate,
+                eventTime,
+                qrHtml
+            );
 
-        sendEmail(to, subject, htmlContent);
+            sendEmail(to, subject, htmlContent);
+            
+        } catch (Exception e) {
+            log.error("❌ Error sending ticket email: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to send ticket email", e);
+        }
     }
 }
