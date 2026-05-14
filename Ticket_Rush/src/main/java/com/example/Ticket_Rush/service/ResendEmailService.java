@@ -25,6 +25,10 @@ public class ResendEmailService {
 
     private static final String RESEND_API_URL = "https://api.resend.com/emails";
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    
+    // Cấu hình email sender
+    private static final String FROM_EMAIL = "TicketRush <noreply@ticketmaster.id.vn>";
+    private static final String FROM_EMAIL_OTP = "TicketRush OTP <otp@ticketmaster.id.vn>";
 
     @Value("${resend.api.key}")
     private String apiKey;
@@ -44,7 +48,11 @@ public class ResendEmailService {
     // ========== PHƯƠNG THỨC GỬI EMAIL CƠ BẢN ==========
     
     private void sendEmail(String to, String subject, String htmlContent) {
-        log.info("📧 Sending email to: {}", to);
+        sendEmailWithFrom(to, subject, htmlContent, FROM_EMAIL);
+    }
+    
+    private void sendEmailWithFrom(String to, String subject, String htmlContent, String fromEmail) {
+        log.info("📧 Sending email to: {} from: {}", to, fromEmail);
         
         if (apiKey == null || apiKey.trim().isEmpty()) {
             log.error("❌ RESEND_API_KEY is missing!");
@@ -53,7 +61,7 @@ public class ResendEmailService {
         
         try {
             Map<String, Object> emailData = Map.of(
-                "from", "TicketRush <onboarding@resend.dev>",
+                "from", fromEmail,
                 "to", to,
                 "subject", subject,
                 "html", htmlContent
@@ -127,7 +135,8 @@ public class ResendEmailService {
             </html>
             """, purposeText, otp);
 
-        sendEmail(to, subject, htmlContent);
+        // Sử dụng email OTP chuyên dụng cho mã xác thực
+        sendEmailWithFrom(to, subject, htmlContent, FROM_EMAIL_OTP);
     }
 
     // ========== GỬI TICKET CONFIRMATION EMAIL (DÙNG URL QR CODE) ==========
@@ -208,6 +217,7 @@ public class ResendEmailService {
                 qrHtml
             );
 
+            // Sử dụng email chính cho ticket confirmation
             sendEmail(to, subject, htmlContent);
             
         } catch (Exception e) {
