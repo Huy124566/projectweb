@@ -13,7 +13,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f0f2f8; }
 
-        /* Sidebar */
         .sidebar { width: 280px; background: linear-gradient(180deg, #0a2a4a 0%, #0a4ab3 100%); height: 100vh; position: fixed; left: 0; top: 0; color: white; z-index: 100; overflow-y: auto; transition: all 0.3s; }
         .sidebar .logo { padding: 25px 24px; border-bottom: 1px solid rgba(255,255,255,0.12); font-size: 22px; font-weight: 700; }
         .sidebar .logo i { font-size: 28px; margin-right: 12px; }
@@ -22,36 +21,30 @@
         .sidebar .nav-item.active { background: rgba(255,255,255,0.2); border-left: 3px solid white; }
         .sidebar .nav-item i { width: 24px; font-size: 18px; }
 
-        /* Main Content */
         .main-content { margin-left: 280px; padding: 24px 32px; transition: all 0.3s; }
         .top-bar { background: white; border-radius: 20px; padding: 16px 28px; margin-bottom: 28px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .admin-avatar { width: 45px; height: 45px; border-radius: 50%; background: #0d5bd7; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px; cursor: pointer; }
 
-        /* Stat Cards */
         .stat-card { background: white; border-radius: 24px; padding: 22px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); transition: 0.3s; cursor: pointer; }
         .stat-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(13,91,215,0.12); }
         .stat-icon { width: 56px; height: 56px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; background: #eef2ff; color: #0d5bd7; }
         .stat-value { font-size: 32px; font-weight: 800; color: #1a2a3a; }
         .stat-label { font-size: 14px; color: #6c7a8a; }
 
-        /* Charts */
         .chart-container { background: white; border-radius: 24px; padding: 20px; margin-bottom: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
         .chart-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         .chart-title i { color: #0d5bd7; }
 
-        /* Tables */
         .event-table { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
         .table thead th { background: #f8f9fc; border-bottom: 2px solid #eef2f6; font-size: 13px; text-transform: uppercase; padding: 15px; }
         .table tbody td { padding: 12px 15px; vertical-align: middle; }
 
-        /* Buttons */
         .btn-primary-custom { background: #0d5bd7; color: white; border: none; padding: 10px 24px; border-radius: 50px; font-weight: 600; transition: 0.2s; }
         .btn-primary-custom:hover { background: #0a4ab3; transform: translateY(-2px); }
         .btn-edit { background: #fef3c7; color: #d97706; border: none; padding: 6px 14px; border-radius: 40px; margin: 0 4px; }
         .btn-delete { background: #fee2e2; color: #dc2626; border: none; padding: 6px 14px; border-radius: 40px; }
-        .btn-save { background: #10b981; color: white; border: none; padding: 6px 14px; border-radius: 40px; }
+        .btn-refresh { background: #e0e7ff; color: #0d5bd7; border: none; padding: 6px 14px; border-radius: 40px; }
 
-        /* Seat Map */
         .seat-grid { background: #f8f9fc; border-radius: 20px; padding: 20px; margin-top: 20px; overflow-x: auto; max-height: 500px; overflow-y: auto; }
         .seat-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
         .seat-row-label { min-width: 45px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; background: #eef2ff; border-radius: 12px; margin-right: 10px; padding: 0 10px; }
@@ -62,20 +55,16 @@
         .seat.sold { background: #dcfce7; border: 2px solid #16a34a; color: #16a34a; cursor: not-allowed; }
         .seat:hover:not(.locked):not(.sold) { transform: scale(1.05); }
 
-        /* Toast */
         .toast-notification { position: fixed; bottom: 30px; right: 30px; background: #0d5bd7; color: white; padding: 12px 24px; border-radius: 50px; z-index: 2000; animation: slideIn 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
 
-        /* Loading */
         .loading-spinner { text-align: center; padding: 60px; }
         .spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #0d5bd7; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Modal */
         .modal-content { border-radius: 20px; border: none; }
         .modal-header { background: linear-gradient(135deg, #0d5bd7, #0a4ab3); color: white; border-radius: 20px 20px 0 0; }
 
-        /* Responsive */
         @media (max-width: 992px) { .sidebar { width: 80px; } .sidebar .logo span, .sidebar .nav-item span { display: none; } .main-content { margin-left: 80px; } }
         @media (max-width: 768px) { .main-content { padding: 16px; } .seat { width: 55px; height: 55px; font-size: 10px; } }
     </style>
@@ -88,6 +77,7 @@
     <div class="nav-item" onclick="showSection('events')"><i class="fas fa-calendar-alt"></i><span>Manage Events</span></div>
     <div class="nav-item" onclick="showSection('create-event')"><i class="fas fa-plus-circle"></i><span>Create Event</span></div>
     <div class="nav-item" onclick="showSection('seat-config')"><i class="fas fa-chair"></i><span>Seat Config</span></div>
+    <div class="nav-item" onclick="showSection('event-analytics')"><i class="fas fa-chart-line"></i><span>Event Analytics</span></div>
     <div class="nav-item" onclick="showSection('analytics')"><i class="fas fa-chart-pie"></i><span>Demographics</span></div>
     <div class="nav-item" onclick="showSection('users')"><i class="fas fa-users"></i><span>Users</span></div>
     <div class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></div>
@@ -119,13 +109,14 @@
         <div class="event-table">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
                 <h5><i class="fas fa-calendar-alt me-2" style="color:#0d5bd7;"></i> All Events</h5>
-                <button class="btn-primary-custom" onclick="showSection('create-event')"><i class="fas fa-plus me-2"></i>New Event</button>
+                <div>
+                    <button class="btn-refresh me-2" onclick="refreshEvents()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    <button class="btn-primary-custom" onclick="showSection('create-event')"><i class="fas fa-plus me-2"></i>New Event</button>
+                </div>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover">
-                    <thead>
-                        <tr><th>ID</th><th>Name</th><th>Location</th><th>Date</th><th>Sold/Total</th><th>Revenue</th><th>Actions</th></tr>
-                    </thead>
+                    <thead><tr><th>ID</th><th>Name</th><th>Location</th><th>Date</th><th>Sold/Total</th><th>Revenue</th><th>Actions</th></tr></thead>
                     <tbody id="eventsTableBody"><tr><td colspan="7" class="text-center py-5"><div class="spinner"></div> Loading...</td></tr></tbody>
                 </table>
             </div>
@@ -141,10 +132,10 @@
                 <div class="col-md-6 mb-3"><label class="form-label fw-bold">Location *</label><input type="text" id="eventLocation" class="form-control" placeholder="e.g., Madison Square Garden"></div>
                 <div class="col-md-6 mb-3"><label class="form-label fw-bold">Date & Time *</label><input type="datetime-local" id="eventDateTime" class="form-control"></div>
                 <div class="col-md-6 mb-3"><label class="form-label fw-bold">Category</label><select id="eventCategory" class="form-select"><option>CONCERT</option><option>SPORTS</option><option>THEATRE</option><option>FAMILY</option><option>COMEDY</option></select></div>
-                <div class="col-12 mb-3"><label class="form-label fw-bold">Description</label><textarea id="eventDescription" class="form-control" rows="3" placeholder="Event description..."></textarea></div>
+                <div class="col-12 mb-3"><label class="form-label fw-bold">Description</label><textarea id="eventDescription" class="form-control" rows="3"></textarea></div>
                 <div class="col-md-6 mb-3"><label class="form-label fw-bold">Image URL</label><input type="text" id="eventImage" class="form-control" placeholder="https://..."></div>
                 <div class="col-md-6 mb-3"><label class="form-label fw-bold">Min Price ($)</label><input type="number" id="eventMinPrice" class="form-control" value="50"></div>
-                <div class="col-12"><button class="btn-primary-custom" onclick="createNewEvent()"><i class="fas fa-save me-2"></i> Create Event</button></div>
+                <div class="col-12"><button type="button" class="btn-primary-custom" onclick="createNewEvent()"><i class="fas fa-save me-2"></i> Create Event</button></div>
             </div>
         </div>
     </div>
@@ -162,6 +153,25 @@
                 <div class="col-12"><button class="btn-primary-custom" onclick="generateSeats()"><i class="fas fa-magic me-2"></i> Generate Seats</button></div>
             </div>
             <div id="seatMap" class="seat-grid"><div class="text-center text-muted py-5"><i class="fas fa-chair fa-3x mb-3"></i><p>Select an event to view seat map</p></div></div>
+        </div>
+    </div>
+
+    <!-- Event Analytics Section -->
+    <div id="eventAnalyticsSection" style="display:none;">
+        <div class="event-table">
+            <h5><i class="fas fa-chart-line me-2" style="color:#0d5bd7;"></i> Event Performance Analytics</h5>
+            <div class="row mt-3 mb-4">
+                <div class="col-md-4"><label class="form-label fw-bold">Select Event</label><select id="analyticsEventSelect" class="form-select" onchange="loadEventAnalytics()"><option value="">-- Choose Event --</option></select></div>
+            </div>
+            <div class="row g-4 mb-4">
+                <div class="col-md-3"><div class="stat-card"><div class="stat-icon"><i class="fas fa-ticket-alt"></i></div><div class="stat-value" id="eventTotalSold">-</div><div class="stat-label">Tickets Sold</div></div></div>
+                <div class="col-md-3"><div class="stat-card"><div class="stat-icon"><i class="fas fa-dollar-sign"></i></div><div class="stat-value" id="eventRevenue">-</div><div class="stat-label">Revenue</div></div></div>
+                <div class="col-md-3"><div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-line"></i></div><div class="stat-value" id="eventOccupancy">-</div><div class="stat-label">Occupancy Rate</div></div></div>
+                <div class="col-md-3"><div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-value" id="eventDaysLeft">-</div><div class="stat-label">Days Until Event</div></div></div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12"><div class="chart-container"><div class="chart-title"><i class="fas fa-chart-pie"></i> Seat Distribution</div><canvas id="eventSeatChart" height="300"></canvas></div></div>
+            </div>
         </div>
     </div>
 
@@ -209,7 +219,7 @@
     </div>
 </div>
 
-<!-- Edit User Role Modal -->
+<!-- Edit User Modal -->
 <div class="modal fade" id="editUserModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -227,13 +237,16 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-const API_BASE = window.location.origin;
+const API_BASE = "http://localhost:8082";
 let eventsList = [];
-let revenueChart, seatStatusChart, genderChart, ageChart;
+let revenueChart, seatStatusChart, genderChart, ageChart, eventSeatChart;
 let stompClient = null;
 let editModal, userModal;
+let isCreating = false;
+let createTimeout = null;
+let eventsLoaded = false;
+let statsLoaded = false;
 
-// ==================== TOAST ====================
 function showToast(msg, type = "success") {
     let t = document.createElement("div");
     t.className = "toast-notification";
@@ -243,75 +256,95 @@ function showToast(msg, type = "success") {
     setTimeout(() => t.remove(), 3000);
 }
 
-// ==================== WEBSOCKET REALTIME ====================
 function connectWebSocket() {
-    const socket = new SockJS(`${API_BASE}/ws-admin`);
+    const socket = new SockJS(`${API_BASE}/ws`);
     stompClient = Stomp.over(socket);
-    stompClient.connect({}, function(frame) {
+    stompClient.connect({}, function() {
         console.log("✅ WebSocket connected for admin");
+        
+        // 📊 1. Lắng nghe cập nhật số liệu Dashboard tổng quan
         stompClient.subscribe('/topic/admin-stats', function(message) {
             const stats = JSON.parse(message.body);
-            console.log("📡 Real-time update received:", stats);
+            console.log("📊 Đã nhận số liệu thống kê mới:", stats);
+            
+            // Cập nhật số liệu hiển thị thời gian thực lên card
             document.getElementById("totalSold").innerText = stats.totalSold || 0;
             document.getElementById("totalRevenue").innerText = `$${(stats.totalRevenue || 0).toLocaleString()}`;
             document.getElementById("occupancyRate").innerText = `${stats.occupancyRate || 0}%`;
             document.getElementById("totalUsers").innerText = stats.totalUsers || 0;
-            refreshCharts();
+            
+            // Tối ưu: Nếu có biểu đồ Trạng thái ghế tổng thể, ta cập nhật trực tiếp data thay vì fetch lại DB
+            if (seatStatusChart && stats.occupancyRate !== undefined) {
+                // Bạn có thể chọn gọi refreshCharts() nếu muốn vẽ lại cả trục thời gian, 
+                // nhưng khuyến khích chỉ gọi khi thực sự cần thiết để tránh quá tải request API ngắn.
+                refreshCharts(); 
+            }
+            
             showToast("📊 Dashboard updated", "info");
         });
-        stompClient.subscribe('/topic/seat-update', function() {
+        
+        // 💺 2. Lắng nghe cập nhật trạng thái Ghế (Đã sửa từ /topic/seat-update thành /topic/seats)
+        stompClient.subscribe('/topic/seats', function(message) {
+            console.log("🔄 Có sự thay đổi trạng thái ghế từ hệ thống");
             if (document.getElementById("seatConfigSection").style.display !== "none") {
                 loadSeatConfig();
             }
         });
-    }, function(error) {
-        console.log("WebSocket connection error:", error);
+        
+        // 📈 3. Lắng nghe cập nhật chi tiết của từng Sự kiện cụ thể
+        stompClient.subscribe('/topic/event-updates', function(message) {
+            const updatedEvent = JSON.parse(message.body);
+            const currentEventId = document.getElementById("analyticsEventSelect").value;
+            if (currentEventId && currentEventId == updatedEvent.id) {
+                console.log("🔄 Real-time update for current event");
+                loadEventAnalytics();
+                showToast("📊 Event updated in real-time", "info");
+            }
+        });
+    }, function(error) { 
+        console.log("WebSocket error, attempting to reconnect...", error); 
+        // Auto reconnect sau 5 giây nếu rớt mạng
+        setTimeout(connectWebSocket, 5000);
     });
 }
 
-// ==================== AUTH CHECK ====================
 function checkAdmin() {
     const userStr = localStorage.getItem("user");
     if (!userStr) { window.location.href = "login.html"; return; }
     let user = JSON.parse(userStr);
     if (user.role !== "ROLE_ADMIN") { alert("No permission"); window.location.href = "index.html"; return; }
     document.getElementById("adminAvatar").innerText = user.username.charAt(0).toUpperCase();
-    
     editModal = new bootstrap.Modal(document.getElementById('editEventModal'));
     userModal = new bootstrap.Modal(document.getElementById('editUserModal'));
-    
     loadDashboard();
     loadEvents();
     loadEventSelect();
     loadUsers();
+    loadEventAnalyticsSelect();
     connectWebSocket();
 }
 
 function logout() { localStorage.removeItem("user"); localStorage.removeItem("token"); window.location.href = "login.html"; }
 
-// ==================== SECTION NAVIGATION ====================
 function showSection(section) {
-    const sections = ['dashboardSection', 'eventsSection', 'createEventSection', 'seatConfigSection', 'analyticsSection', 'usersSection'];
+    const sections = ['dashboardSection', 'eventsSection', 'createEventSection', 'seatConfigSection', 'eventAnalyticsSection', 'analyticsSection', 'usersSection'];
     sections.forEach(id => document.getElementById(id).style.display = 'none');
     document.querySelectorAll('.sidebar .nav-item').forEach(item => item.classList.remove('active'));
-    
-    let targetMap = {
-        'dashboard': 'dashboardSection', 'events': 'eventsSection', 'create-event': 'createEventSection',
-        'seat-config': 'seatConfigSection', 'analytics': 'analyticsSection', 'users': 'usersSection'
-    };
+    const targetMap = { 'dashboard': 'dashboardSection', 'events': 'eventsSection', 'create-event': 'createEventSection', 'seat-config': 'seatConfigSection', 'event-analytics': 'eventAnalyticsSection', 'analytics': 'analyticsSection', 'users': 'usersSection' };
     let target = targetMap[section];
     if (target) document.getElementById(target).style.display = 'block';
-    
     event?.target?.closest('.nav-item')?.classList.add('active');
     
-    if (section === 'dashboard') loadDashboard();
-    else if (section === 'events') loadEvents();
+    if (section === 'dashboard') { if (!statsLoaded) { loadDashboard(); statsLoaded = true; } }
+    else if (section === 'events') { if (!eventsLoaded) { loadEvents(); eventsLoaded = true; } }
     else if (section === 'seat-config') { loadEventSelect(); loadSeatConfig(); }
+    else if (section === 'event-analytics') { loadEventAnalytics(); }
     else if (section === 'analytics') loadDemographics();
     else if (section === 'users') loadUsers();
 }
 
-// ==================== DASHBOARD ====================
+function refreshEvents() { eventsLoaded = false; loadEvents(); eventsLoaded = true; showToast("Events refreshed!"); }
+
 async function loadDashboard() {
     try {
         let stats = await fetch(`${API_BASE}/admin/stats`).then(r => r.json());
@@ -332,7 +365,6 @@ async function refreshCharts() {
         revenueChart = new Chart(document.getElementById("revenueChart").getContext('2d'), {
             type: 'line', data: { labels: labels, datasets: [{ label: 'Revenue ($)', data: data, borderColor: '#0d5bd7', backgroundColor: 'rgba(13,91,215,0.05)', fill: true, tension: 0.4 }] }
         });
-        
         let seatStats = await fetch(`${API_BASE}/admin/seats/stats`).then(r => r.json());
         if (seatStatusChart) seatStatusChart.destroy();
         seatStatusChart = new Chart(document.getElementById("seatStatusChart").getContext('2d'), {
@@ -341,33 +373,79 @@ async function refreshCharts() {
     } catch(e) { console.error(e); }
 }
 
-// ==================== EVENTS ====================
 async function loadEvents() {
     try {
         let res = await fetch(`${API_BASE}/admin/events`);
         eventsList = await res.json();
         let tbody = document.getElementById("eventsTableBody");
-        if (!eventsList.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><i class="fas fa-calendar-times fa-2x text-muted mb-2"></i><p>No events found</p></td></tr>'; return; }
+        if (!eventsList.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5">No events found</td></tr>'; return; }
         tbody.innerHTML = '';
         for (let e of eventsList) {
             let stats = await fetch(`${API_BASE}/admin/events/${e.id}/stats`).then(r => r.json()).catch(() => ({}));
-            tbody.innerHTML += `<tr><td>${e.id}</td><td><strong>${e.name}</strong></td><td>${e.location}</td><td>${new Date(e.eventTime).toLocaleDateString()}</td><td><span class="badge bg-primary">${stats.soldSeats || 0}/${stats.totalSeats || 0}</span></td><td>$${(stats.revenue || 0).toLocaleString()}</td>
-                <td><button class="btn-edit" onclick="openEditModal(${e.id})"><i class="fas fa-edit"></i></button><button class="btn-delete" onclick="deleteEvent(${e.id})"><i class="fas fa-trash"></i></button></td></tr>`;
+            tbody.innerHTML += `
+                <tr>
+                    <td>${e.id}</td>
+                    <td><strong>${e.name}</strong></td>
+                    <td>${e.location}</td>
+                    <td>${new Date(e.eventTime).toLocaleDateString()}</td>
+                    <td><span class="badge bg-primary">${stats.soldSeats || 0}/${stats.totalSeats || 0}</span></td>
+                    <td>$${(stats.revenue || 0).toLocaleString()}</td>
+                    <td><button class="btn-edit" onclick="openEditModal(${e.id})"><i class="fas fa-edit"></i></button><button class="btn-delete" onclick="deleteEvent(${e.id})"><i class="fas fa-trash"></i></button></td>
+                </tr>
+            `;
         }
     } catch(e) { console.error(e); }
 }
 
 async function createNewEvent() {
-    let event = {
-        name: document.getElementById("eventName").value, location: document.getElementById("eventLocation").value,
-        eventTime: document.getElementById("eventDateTime").value, category: document.getElementById("eventCategory").value,
-        description: document.getElementById("eventDescription").value, imageUrl: document.getElementById("eventImage").value || "https://picsum.photos/300/200",
-        minPrice: parseFloat(document.getElementById("eventMinPrice").value)
-    };
-    if (!event.name || !event.location || !event.eventTime) { alert("Required fields missing"); return; }
-    let res = await fetch(`${API_BASE}/admin/events`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(event) });
-    if (res.ok) { showToast("Event created"); showSection('events'); loadEvents(); }
-    else alert("Create failed");
+    if (isCreating) { showToast("Đang xử lý, vui lòng chờ...", "warning"); return; }
+    if (createTimeout) clearTimeout(createTimeout);
+    isCreating = true;
+    const createBtn = document.querySelector('#createEventSection .btn-primary-custom');
+    const originalText = createBtn.innerHTML;
+    createBtn.disabled = true;
+    createBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+    try {
+        let event = {
+            name: document.getElementById("eventName").value.trim(),
+            location: document.getElementById("eventLocation").value.trim(),
+            eventTime: document.getElementById("eventDateTime").value,
+            category: document.getElementById("eventCategory").value,
+            description: document.getElementById("eventDescription").value,
+            imageUrl: document.getElementById("eventImage").value || "https://picsum.photos/300/200",
+            minPrice: parseFloat(document.getElementById("eventMinPrice").value)
+        };
+        if (!event.name || !event.location || !event.eventTime) {
+            alert("Required fields missing");
+            isCreating = false;
+            createBtn.disabled = false;
+            createBtn.innerHTML = originalText;
+            return;
+        }
+        let res = await fetch(`${API_BASE}/admin/events`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(event) });
+        if (res.ok) {
+            showToast("Event created successfully!");
+            eventsLoaded = false;
+            showSection('events');
+            document.getElementById("eventName").value = "";
+            document.getElementById("eventLocation").value = "";
+            document.getElementById("eventDateTime").value = "";
+            document.getElementById("eventDescription").value = "";
+            document.getElementById("eventImage").value = "";
+            document.getElementById("eventMinPrice").value = "50";
+        } else {
+            const error = await res.text();
+            alert("Create failed: " + error);
+        }
+    } catch(e) { console.error(e); alert("Create failed: " + e.message); }
+    finally {
+        createTimeout = setTimeout(() => {
+            isCreating = false;
+            createBtn.disabled = false;
+            createBtn.innerHTML = originalText;
+            createTimeout = null;
+        }, 1000);
+    }
 }
 
 function openEditModal(id) {
@@ -393,18 +471,17 @@ async function updateEvent() {
         minPrice: parseFloat(document.getElementById("editEventMinPrice").value)
     };
     let res = await fetch(`${API_BASE}/admin/events/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(event) });
-    if (res.ok) { showToast("Updated"); editModal.hide(); loadEvents(); loadDashboard(); }
+    if (res.ok) { showToast("Updated"); editModal.hide(); eventsLoaded = false; loadEvents(); loadDashboard(); }
     else alert("Update failed");
 }
 
 async function deleteEvent(id) {
     if (confirm("Delete permanently?")) { 
         await fetch(`${API_BASE}/admin/events/${id}`, { method: "DELETE" }); 
-        showToast("Deleted"); loadEvents(); loadDashboard(); 
+        showToast("Deleted"); eventsLoaded = false; loadEvents(); loadDashboard(); 
     }
 }
 
-// ==================== SEAT CONFIG ====================
 async function loadEventSelect() {
     let res = await fetch(`${API_BASE}/admin/events`);
     let events = await res.json();
@@ -416,7 +493,7 @@ async function loadEventSelect() {
 
 async function loadSeatConfig() {
     let eventId = document.getElementById("seatEventSelect").value;
-    if (!eventId) { document.getElementById("seatMap").innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-chair fa-3x mb-3"></i><p>Select an event to view seat map</p></div>'; return; }
+    if (!eventId) { document.getElementById("seatMap").innerHTML = '<div class="text-center text-muted py-5">Select an event to view seat map</div>'; return; }
     try {
         let seats = await fetch(`${API_BASE}/admin/events/${eventId}/seats`).then(r => r.json());
         if (!seats.length) { document.getElementById("seatMap").innerHTML = '<div class="alert alert-info">No seats generated yet. Use form below to generate.</div>'; return; }
@@ -450,9 +527,7 @@ async function generateSeats() {
     if (res.ok) {
         let seats = await fetch(`${API_BASE}/admin/events/${eventId}/seats`).then(r => r.json());
         let vipPrice = defaultPrice * 2;
-        for (let seat of seats) {
-            if (seat.rowIndex <= vipRows) await fetch(`${API_BASE}/admin/seats/${seat.id}/update-price?price=${vipPrice}`, { method: "POST" });
-        }
+        for (let seat of seats) { if (seat.rowIndex <= vipRows) await fetch(`${API_BASE}/admin/seats/${seat.id}/update-price?price=${vipPrice}`, { method: "POST" }); }
         showToast("Seats generated successfully");
         loadSeatConfig();
     } else alert("Generation failed");
@@ -467,7 +542,6 @@ async function updateSeatPrice(seatId) {
     }
 }
 
-// ==================== DEMOGRAPHICS ====================
 async function loadDemographics() {
     try {
         let data = await fetch(`${API_BASE}/admin/demographics`).then(r => r.json());
@@ -482,17 +556,24 @@ async function loadDemographics() {
     } catch(e) { console.error(e); }
 }
 
-// ==================== USERS ====================
 async function loadUsers() {
     try {
         let users = await fetch(`${API_BASE}/admin/users`).then(r => r.json());
         let tbody = document.getElementById("usersTableBody");
-        if (!users.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5">No users found</td></tr>'; return; }
+        if (!users.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5">No users found</tr>'; return; }
         tbody.innerHTML = '';
         users.forEach(u => {
-            tbody.innerHTML += `<tr><td>${u.id}</td><td>${u.username}</td><td>${u.email}</td><td><span class="badge ${u.role === 'ROLE_ADMIN' ? 'bg-danger' : 'bg-secondary'}">${u.role}</span></td><td>${new Date(u.createdAt).toLocaleDateString()}</td>
-                <td><button class="btn-edit" onclick="openUserModal(${u.id}, '${u.username}', '${u.email}', '${u.role}')"><i class="fas fa-user-shield"></i></button>
-                <button class="btn-delete" onclick="deleteUser(${u.id})"><i class="fas fa-trash"></i></button></td></tr>`;
+            tbody.innerHTML += `
+                <tr>
+                    <td>${u.id}</td>
+                    <td>${u.username}</td>
+                    <td>${u.email}</td>
+                    <td><span class="badge ${u.role === 'ROLE_ADMIN' ? 'bg-danger' : 'bg-secondary'}">${u.role}</span></td>
+                    <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+                    <td><button class="btn-edit" onclick="openUserModal(${u.id}, '${u.username}', '${u.email}', '${u.role}')"><i class="fas fa-user-shield"></i></button>
+                    <button class="btn-delete" onclick="deleteUser(${u.id})"><i class="fas fa-trash"></i></button></td>
+                </tr>
+            `;
         });
     } catch(e) { console.error(e); }
 }
@@ -518,6 +599,38 @@ async function deleteUser(id) {
         await fetch(`${API_BASE}/admin/users/${id}`, { method: "DELETE" });
         showToast("User deleted"); loadUsers(); loadDashboard();
     }
+}
+
+async function loadEventAnalyticsSelect() {
+    let res = await fetch(`${API_BASE}/admin/events`);
+    let events = await res.json();
+    let select = document.getElementById("analyticsEventSelect");
+    select.innerHTML = '<option value="">-- Choose Event --</option>';
+    events.forEach(e => select.innerHTML += `<option value="${e.id}">${e.name}</option>`);
+}
+
+async function loadEventAnalytics() {
+    const eventId = document.getElementById("analyticsEventSelect").value;
+    if (!eventId) return;
+    try {
+        const event = await fetch(`${API_BASE}/events/${eventId}`).then(r => r.json());
+        const stats = await fetch(`${API_BASE}/admin/events/${eventId}/stats`).then(r => r.json());
+        document.getElementById("eventTotalSold").innerText = stats.soldSeats || 0;
+        document.getElementById("eventRevenue").innerText = `$${(stats.revenue || 0).toLocaleString()}`;
+        document.getElementById("eventOccupancy").innerText = `${stats.occupancyRate || 0}%`;
+        const daysLeft = Math.ceil((new Date(event.eventTime) - new Date()) / (1000 * 60 * 60 * 24));
+        document.getElementById("eventDaysLeft").innerText = daysLeft > 0 ? `${daysLeft} days` : "Event passed";
+        
+        let seats = await fetch(`${API_BASE}/admin/events/${eventId}/seats`).then(r => r.json());
+        const available = seats.filter(s => s.status === 'AVAILABLE').length;
+        const locked = seats.filter(s => s.status === 'LOCKED').length;
+        const sold = seats.filter(s => s.status === 'SOLD').length;
+        if (eventSeatChart) eventSeatChart.destroy();
+        eventSeatChart = new Chart(document.getElementById("eventSeatChart").getContext('2d'), {
+            type: 'doughnut',
+            data: { labels: ['Available', 'Locked', 'Sold'], datasets: [{ data: [available, locked, sold], backgroundColor: ['#e0e7ff', '#fef3c7', '#dcfce7'] }] }
+        });
+    } catch(e) { console.error(e); }
 }
 
 window.addEventListener("DOMContentLoaded", checkAdmin);

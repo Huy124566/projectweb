@@ -10,22 +10,14 @@ import java.util.Map;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.example.Ticket_Rush.entity.Event;
 import com.example.Ticket_Rush.entity.Seat;
 import com.example.Ticket_Rush.entity.SeatStatus;
 import com.example.Ticket_Rush.entity.User;
 import com.example.Ticket_Rush.entity.UserRole;
+import com.example.Ticket_Rush.exception.NotFoundException;
 import com.example.Ticket_Rush.repository.EventRepository;
 import com.example.Ticket_Rush.repository.SeatRepository;
 import com.example.Ticket_Rush.repository.TicketRepository;
@@ -45,11 +37,10 @@ public class AdminController {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final SeatService seatService;
-    private final SimpMessagingTemplate messagingTemplate; // 🔥 THÊM DÒNG NÀY
+    private final SimpMessagingTemplate messagingTemplate;
 
-    // ==================== DASHBOARD STATS ====================
-    @GetMapping("/stats")
-    public ResponseEntity<Map<String, Object>> getDashboardStats() {
+    // ==================== 🛠️ HÀM TÍNH TOÁN NỘI BỘ (Chống đệ quy, tối ưu hiệu năng) ====================
+    private Map<String, Object> calculateStats() {
         Map<String, Object> stats = new HashMap<>();
         
         long totalTickets = ticketRepository.count();
@@ -66,22 +57,35 @@ public class AdminController {
         stats.put("totalRevenue", totalRevenue);
         stats.put("occupancyRate", Math.round(occupancyRate));
         
-        return ResponseEntity.ok(stats);
+        return stats;
     }
 
-    // 🔥 GỬI REALTIME UPDATE SAU KHI THAY ĐỔI
+    // ==================== THỐNG KÊ TỔNG QUAN ====================
+    @GetMapping("/stats")
+    public ResponseEntity<Map<String, Object>> getDashboardStats() {
+        return ResponseEntity.ok(calculateStats());
+    }
+
     private void broadcastDashboardUpdate() {
         try {
-            // Lấy dữ liệu mới nhất
-            Map<String, Object> stats = getDashboardStats().getBody();
+            Map<String, Object> stats = calculateStats(); // Đã sửa: Gọi hàm nội bộ an toàn
             messagingTemplate.convertAndSend("/topic/admin-stats", stats);
-            System.out.println("📡 Real-time update sent to all admins");
+            System.out.println("📡 Đã gửi cập nhật Dashboard realtime đến admin");
         } catch (Exception e) {
-            System.err.println("Failed to broadcast update: " + e.getMessage());
+            System.err.println("Lỗi gửi cập nhật Dashboard: " + e.getMessage());
         }
     }
 
-    // ==================== REVENUE OVER TIME ====================
+    private void broadcastEventUpdate(Long eventId) {
+        try {
+            messagingTemplate.convertAndSend("/topic/event-updates", Map.of("id", eventId));
+            System.out.println("📡 Đã gửi cập nhật sự kiện realtime cho event: " + eventId);
+        } catch (Exception e) {
+            System.err.println("Lỗi gửi cập nhật sự kiện: " + e.getMessage());
+        }
+    }
+
+    // ==================== BIỂU ĐỒ DOANH THU ====================
     @GetMapping("/revenue/timeline")
     public ResponseEntity<Map<String, Object>> getRevenueTimeline(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
@@ -93,15 +97,17 @@ public class AdminController {
         List<BigDecimal> revenues = new ArrayList<>();
         
         for (Object[] row : results) {
-            dates.add(row[0].toString());
-            revenues.add((BigDecimal) row[1]);
+            if (row[0] != null) {
+                dates.add(row[0].toString());
+                revenues.add(row[1] != null ? (BigDecimal) row[1] : BigDecimal.ZERO);
+            }
         }
         data.put("dates", dates);
         data.put("revenues", revenues);
         return ResponseEntity.ok(data);
     }
 
-    // ==================== SEAT STATUS STATS ====================
+    // ==================== THỐNG KÊ TRẠNG THÁI GHẾ ====================
     @GetMapping("/seats/stats")
     public ResponseEntity<Map<String, Long>> getSeatStats() {
         Map<String, Long> stats = new HashMap<>();
@@ -111,19 +117,15 @@ public class AdminController {
         return ResponseEntity.ok(stats);
     }
 
-    // ==================== DEMOGRAPHIC STATS ====================
+    // ==================== THỐNG KÊ NHÂN KHẨU HỌC ====================
     @GetMapping("/demographics")
     public ResponseEntity<Map<String, Object>> getDemographics() {
         Map<String, Object> demographics = new HashMap<>();
         
-        long maleCount = userRepository.countByGender("male");
-        long femaleCount = userRepository.countByGender("female");
-        long otherCount = userRepository.countByGender("other");
-        
         Map<String, Long> genderStats = new HashMap<>();
-        genderStats.put("male", maleCount);
-        genderStats.put("female", femaleCount);
-        genderStats.put("other", otherCount);
+        genderStats.put("male", userRepository.countByGender("male"));
+        genderStats.put("female", userRepository.countByGender("female"));
+        genderStats.put("other", userRepository.countByGender("other"));
         demographics.put("gender", genderStats);
         
         Map<String, Long> ageStats = new HashMap<>();
@@ -136,7 +138,7 @@ public class AdminController {
         return ResponseEntity.ok(demographics);
     }
 
-    // ==================== EVENT MANAGEMENT ====================
+    // ==================== QUẢN LÝ SỰ KIỆN ====================
     @GetMapping("/events")
     public ResponseEntity<List<Event>> getAllEvents() {
         return ResponseEntity.ok(eventRepository.findAll());
@@ -146,13 +148,15 @@ public class AdminController {
     public ResponseEntity<Event> createEvent(@RequestBody Event event) {
         event.setCreatedAt(LocalDateTime.now());
         Event saved = eventRepository.save(event);
-        broadcastDashboardUpdate(); // 🔥 GỬI REALTIME
+        broadcastDashboardUpdate();
+        broadcastEventUpdate(saved.getId());
         return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/events/{id}")
     public ResponseEntity<Event> updateEvent(@PathVariable Long id, @RequestBody Event event) {
-        Event existing = eventRepository.findById(id).orElseThrow();
+        Event existing = eventRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy sự kiện với ID: " + id));
         existing.setName(event.getName());
         existing.setLocation(event.getLocation());
         existing.setEventTime(event.getEventTime());
@@ -161,18 +165,23 @@ public class AdminController {
         existing.setCategory(event.getCategory());
         existing.setMinPrice(event.getMinPrice());
         Event saved = eventRepository.save(existing);
-        broadcastDashboardUpdate(); // 🔥 GỬI REALTIME
+        broadcastDashboardUpdate();
+        broadcastEventUpdate(saved.getId());
         return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/events/{id}")
     public ResponseEntity<String> deleteEvent(@PathVariable Long id) {
+        if (!eventRepository.existsById(id)) {
+            throw new NotFoundException("Không tìm thấy sự kiện với ID để xóa: " + id);
+        }
         eventRepository.deleteById(id);
-        broadcastDashboardUpdate(); // 🔥 GỬI REALTIME
-        return ResponseEntity.ok("Event deleted");
+        broadcastDashboardUpdate();
+        broadcastEventUpdate(id);
+        return ResponseEntity.ok("Đã xóa sự kiện thành công");
     }
 
-    // ==================== SEAT CONFIGURATION ====================
+    // ==================== CẤU HÌNH GHẾ NGỒI ====================
     @GetMapping("/events/{eventId}/seats")
     public ResponseEntity<List<Seat>> getEventSeats(@PathVariable Long eventId) {
         return ResponseEntity.ok(seatRepository.findByEventId(eventId));
@@ -186,8 +195,9 @@ public class AdminController {
             @RequestParam BigDecimal defaultPrice
     ) {
         seatService.generateSeats(eventId, rows, cols, defaultPrice);
-        broadcastDashboardUpdate(); // 🔥 GỬI REALTIME
-        return ResponseEntity.ok("Seats generated successfully");
+        broadcastDashboardUpdate();
+        broadcastEventUpdate(eventId);
+        return ResponseEntity.ok("Đã tạo sơ đồ ghế thành công");
     }
 
     @PostMapping("/seats/{seatId}/update-price")
@@ -195,14 +205,19 @@ public class AdminController {
             @PathVariable Long seatId,
             @RequestParam BigDecimal price
     ) {
-        Seat seat = seatRepository.findById(seatId).orElseThrow();
+        Seat seat = seatRepository.findById(seatId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy ghế với ID: " + seatId));
         seat.setPrice(price);
         Seat saved = seatRepository.save(seat);
-        broadcastDashboardUpdate(); // 🔥 GỬI REALTIME
+        broadcastDashboardUpdate();
+        // Bắn update thêm cho cụm phân tích sự kiện nếu ghế này thuộc một event cụ thể
+        if (seat.getEvent() != null) {
+            broadcastEventUpdate(seat.getEvent().getId());
+        }
         return ResponseEntity.ok(saved);
     }
 
-    // ==================== TICKET STATS PER EVENT ====================
+    // ==================== THỐNG KÊ SỰ KIỆN ====================
     @GetMapping("/events/{eventId}/stats")
     public ResponseEntity<Map<String, Object>> getEventStats(@PathVariable Long eventId) {
         Map<String, Object> stats = new HashMap<>();
@@ -219,7 +234,7 @@ public class AdminController {
         return ResponseEntity.ok(stats);
     }
 
-    // ==================== USER MANAGEMENT ====================
+    // ==================== QUẢN LÝ NGƯỜI DÙNG ====================
     @GetMapping("/users")
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userRepository.findAll());
@@ -228,17 +243,21 @@ public class AdminController {
     @PutMapping("/users/{id}/role")
     public ResponseEntity<User> updateUserRole(@PathVariable Long id, @RequestBody Map<String, String> body) {
         String newRole = body.get("role");
-        User user = userRepository.findById(id).orElseThrow();
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng với ID: " + id));
         user.setRole(UserRole.valueOf(newRole));
         User saved = userRepository.save(user);
-        broadcastDashboardUpdate(); // 🔥 GỬI REALTIME
+        broadcastDashboardUpdate();
         return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/users/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new NotFoundException("Không tìm thấy người dùng với ID để xóa: " + id);
+        }
         userRepository.deleteById(id);
-        broadcastDashboardUpdate(); // 🔥 GỬI REALTIME
-        return ResponseEntity.ok("User deleted");
+        broadcastDashboardUpdate();
+        return ResponseEntity.ok("Đã xóa người dùng thành công");
     }
 }

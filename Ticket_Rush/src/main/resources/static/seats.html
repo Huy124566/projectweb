@@ -6,12 +6,11 @@
     <title>TicketMaster - Select Seats</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="/css/match-card.css">
-    <script src="/js/match-card.js" defer></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
         
+        /* Header */
         .header { background: #0d5bd7; padding: 14px 40px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; position: sticky; top: 0; z-index: 100; }
         .logo { font-size: 1.5rem; font-weight: 700; color: white; text-decoration: none; cursor: pointer; }
         .logo i { margin-right: 8px; }
@@ -73,7 +72,7 @@
             font-size: 14px;
         }
         
-        /* Legend - Gom thành thanh ngang dưới screen */
+        /* Legend */
         .legend {
             display: flex;
             justify-content: center;
@@ -97,8 +96,9 @@
         }
         .legend-box.available { background: #e0e7ff; border: 2px solid #0d5bd7; }
         .legend-box.vip { background: #fde68a; border: 2px solid #d97706; }
-        .legend-box.locked { background: #fed7aa; border: 2px solid #ea580c; opacity: 0.6; }
-        .legend-box.sold { background: #e2e8f0; border: 2px solid #94a3b8; opacity: 0.5; }
+        .legend-box.locked { background: #fed7aa; border: 2px solid #ea580c; }
+        .legend-box.locked-by-me { background: #fde68a; border: 2px solid #d97706; }
+        .legend-box.sold { background: #e2e8f0; border: 2px solid #94a3b8; }
         
         /* Seat Grid */
         .seat-grid { display: flex; flex-direction: column; gap: 10px; overflow-x: auto; padding: 10px 0; }
@@ -116,10 +116,10 @@
             font-size: 13px;
         }
         
-        /* Seat - Thiết kế đơn giản, hover hiển thị số */
+        /* Seat Styles */
         .seat { 
-            width: 48px; 
-            height: 48px; 
+            width: 52px; 
+            height: 52px; 
             border-radius: 12px; 
             display: flex; 
             align-items: center; 
@@ -131,7 +131,7 @@
             position: relative;
         }
         .seat i { 
-            font-size: 16px; 
+            font-size: 18px; 
             transition: all 0.2s;
         }
         .seat span {
@@ -155,9 +155,6 @@
             background: #0d5bd7; 
             color: white; 
         }
-        .seat.available:hover span {
-            color: white;
-        }
         
         .seat.vip { 
             background: #fde68a; 
@@ -175,11 +172,20 @@
             border: 2px solid #ea580c; 
             color: #9a3412; 
             cursor: not-allowed; 
-            opacity: 0.6;
+            opacity: 0.7;
         }
-        .seat.locked i { display: block; }
-        .seat.locked span { display: none; }
-        .seat.locked:hover { transform: none; }
+        
+        .seat.locked-by-me { 
+            background: #fde68a; 
+            border: 2px solid #d97706; 
+            color: #92400e;
+            cursor: pointer;
+            animation: pulse 2s infinite;
+        }
+        .seat.locked-by-me:hover { 
+            transform: scale(1.05);
+            background: #fbbf24;
+        }
         
         .seat.sold { 
             background: #e2e8f0; 
@@ -188,9 +194,12 @@
             cursor: not-allowed; 
             opacity: 0.5;
         }
-        .seat.sold i { display: block; }
-        .seat.sold span { display: none; }
-        .seat.sold:hover { transform: none; }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(217, 119, 6, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); }
+        }
         
         /* Cart Panel */
         .cart-panel { 
@@ -205,12 +214,10 @@
         .cart-header h5 { margin: 0; font-weight: 700; }
         .cart-items { max-height: 400px; overflow-y: auto; margin-bottom: 20px; }
         
-        /* Empty cart - làm mờ tinh tế */
         .cart-empty {
             text-align: center;
             padding: 40px 20px;
             opacity: 0.5;
-            transition: opacity 0.3s;
         }
         .cart-empty i {
             font-size: 48px;
@@ -221,9 +228,6 @@
             color: #64748b;
             margin-bottom: 5px;
         }
-        .cart-empty small {
-            color: #94a3b8;
-        }
         
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eef2f6; }
         .cart-item-info { flex: 1; }
@@ -231,36 +235,38 @@
         .cart-timer { font-size: 11px; color: #dc2626; margin-top: 4px; font-weight: 600; }
         .cart-timer i { margin-right: 4px; }
         .cart-item-price { color: #0d5bd7; font-weight: 600; }
-        .cart-item-actions button { background: none; border: none; color: #dc3545; cursor: pointer; margin-left: 10px; font-size: 14px; }
+        .cart-item-actions button { background: none; border: none; color: #dc3545; cursor: pointer; margin-left: 10px; font-size: 14px; transition: 0.2s; }
+        .cart-item-actions button:hover { transform: scale(1.1); }
         
         .cart-total { padding-top: 15px; border-top: 2px solid #eef2f6; }
         .total-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
         .grand-total { font-size: 1.2rem; font-weight: 800; color: #0d5bd7; }
         .btn-checkout { background: #0d5bd7; color: white; border: none; padding: 14px; border-radius: 50px; font-weight: 700; width: 100%; transition: 0.2s; }
         .btn-checkout:hover { background: #0a4ab3; transform: translateY(-2px); }
-        .btn-checkout:disabled { background: #cbd5e1; cursor: not-allowed; }
-        .btn-clear-cart { background: none; border: none; color: #dc3545; font-size: 13px; }
+        .btn-checkout:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+        .btn-clear-cart { background: none; border: none; color: #dc3545; font-size: 13px; transition: 0.2s; }
+        .btn-clear-cart:hover { text-decoration: underline; }
         
         .loading-spinner { text-align: center; padding: 60px; }
         .spinner { width: 50px; height: 50px; border: 3px solid #e2e8f0; border-top-color: #0d5bd7; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        .toast-notification { position: fixed; bottom: 30px; right: 30px; background: #0d5bd7; color: white; padding: 14px 28px; border-radius: 50px; z-index: 2000; animation: slideIn 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .toast-notification { position: fixed; bottom: 30px; right: 30px; color: white; padding: 14px 28px; border-radius: 50px; z-index: 2000; animation: slideIn 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
         
+        /* Error container */
+        .error-container { text-align: center; padding: 60px 20px; }
+        .error-container i { font-size: 48px; margin-bottom: 20px; }
+        
         @media (max-width: 992px) { 
-            .seat { width: 42px; height: 42px; } 
+            .seat { width: 45px; height: 45px; } 
             .row-label { width: 35px; } 
-            .event-image { height: 180px; }
-            .legend { gap: 15px; }
         }
         @media (max-width: 768px) { 
-            .seat { width: 38px; height: 38px; } 
+            .seat { width: 40px; height: 40px; font-size: 11px; }
+            .seat i { font-size: 14px; }
             .event-title { font-size: 1.3rem; } 
-            .event-component-wrapper { padding: 20px; }
             .container-custom { margin: 60px auto 30px; padding: 0 20px; }
-            .legend-item { font-size: 10px; }
-            .legend-box { width: 18px; height: 18px; }
         }
     </style>
 </head>
@@ -282,7 +288,8 @@
                 <div class="legend">
                     <div class="legend-item"><div class="legend-box available"></div><span>Available</span></div>
                     <div class="legend-item"><div class="legend-box vip"></div><span>VIP</span></div>
-                    <div class="legend-item"><div class="legend-box locked"></div><span>Locked</span></div>
+                    <div class="legend-item"><div class="legend-box locked"></div><span>Locked (Other)</span></div>
+                    <div class="legend-item"><div class="legend-box locked-by-me"></div><span>Locked (You)</span></div>
                     <div class="legend-item"><div class="legend-box sold"></div><span>Sold</span></div>
                 </div>
                 <div id="seatMap" class="seat-grid"><div class="loading-spinner"><div class="spinner"></div></div></div>
@@ -293,7 +300,7 @@
             <div class="cart-panel">
                 <div class="cart-header">
                     <h5><i class="fas fa-shopping-cart me-2" style="color:#0d5bd7;"></i>Your Cart</h5>
-                    <button class="btn-clear-cart" onclick="clearCart()" id="clearCartBtn" style="display:none;"><i class="fas fa-trash-alt"></i> Clear All</button>
+                    <button class="btn-clear-cart" onclick="clearCart()" id="clearCartBtn" style="display:none;"><i class="fas fa-trash-alt me-1"></i> Clear All</button>
                 </div>
                 <div id="cartItems" class="cart-items"></div>
                 <div class="cart-total">
@@ -311,33 +318,31 @@
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 <script>
-const API_BASE = window.location.origin;
+// ==================== CONFIGURATION ====================
+const API_BASE = "http://localhost:8082";
 const DEFAULT_EVENT_IMAGE = 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600&h=300&fit=crop';
+
 let currentUser = null;
 let seats = [];
 let cart = [];
 let vipRows = 2;
 let cartTimers = new Map();
 let stompClient = null;
+let retryCountdown = 0;
+let countdownInterval = null;
 
 const urlParams = new URLSearchParams(window.location.search);
 const eventId = urlParams.get("eventId");
 const CART_KEY = `cart_${eventId}`;
 
-// ==================== MÃ CỜ ====================
-function getFlagCode(teamName) {
-    const flagMap = {
-        'usa': 'us', 'mexico': 'mx', 'brazil': 'br', 'germany': 'de',
-        'argentina': 'ar', 'france': 'fr', 'england': 'gb-eng', 'spain': 'es',
-        'portugal': 'pt', 'netherlands': 'nl', 'italy': 'it', 'belgium': 'be',
-        'japan': 'jp', 'south-korea': 'kr', 'austria': 'at'
-    };
-    return flagMap[teamName] || 'un';
-}
-
-function isComponentName(url) {
-    if (!url) return false;
-    return !url.includes('/') && !url.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+// ==================== UTILITIES ====================
+function showToast(msg, type = "success") {
+    const toast = document.createElement("div");
+    toast.className = "toast-notification";
+    toast.style.background = type === "error" ? "#dc3545" : type === "warning" ? "#d97706" : "#0d5bd7";
+    toast.innerHTML = `<i class="fas ${type === 'error' ? 'fa-exclamation-triangle' : type === 'warning' ? 'fa-clock' : 'fa-check-circle'} me-2"></i>${msg}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
 }
 
 // ==================== AUTH ====================
@@ -361,62 +366,88 @@ function renderAuthUI() {
                 <i class="fas fa-chevron-down"></i>
             </div>
             <div id="dropdownMenu" class="dropdown-menu-custom">
-                <div class="menu-item" onclick="window.location.href='profile.html'">My Profile</div>
-                <div class="menu-item" onclick="window.location.href='my-tickets.html'">My Tickets</div>
-                <div class="menu-item logout" onclick="logout()">Logout</div>
+                <div class="menu-item" onclick="window.location.href='profile.html'"><i class="fas fa-user"></i> My Profile</div>
+                <div class="menu-item" onclick="window.location.href='my-tickets.html'"><i class="fas fa-ticket-alt"></i> My Tickets</div>
+                <div class="menu-item logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</div>
             </div>
         `;
     } else {
-        area.innerHTML = `<a href="login.html" class="btn btn-outline-light btn-sm">Sign In</a>`;
+        area.innerHTML = `<a href="login.html" class="btn btn-outline-light btn-sm"><i class="fas fa-sign-in-alt me-1"></i> Sign In</a>`;
     }
 }
 
-function toggleMenu(e) { e.stopPropagation(); const m = document.getElementById("dropdownMenu"); if(m) m.style.display = m.style.display === "block" ? "none" : "block"; }
-function logout() { localStorage.removeItem("user"); window.location.href = "login.html"; }
-document.addEventListener("click", () => { const m = document.getElementById("dropdownMenu"); if(m) m.style.display = "none"; });
+function toggleMenu(e) { 
+    e.stopPropagation(); 
+    const m = document.getElementById("dropdownMenu"); 
+    if(m) m.style.display = m.style.display === "block" ? "none" : "block"; 
+}
+
+function logout() { 
+    localStorage.removeItem("user"); 
+    window.location.href = "login.html"; 
+}
+
+document.addEventListener("click", () => { 
+    const m = document.getElementById("dropdownMenu"); 
+    if(m) m.style.display = "none"; 
+});
 
 // ==================== WEBSOCKET ====================
 function connectWebSocket() {
     if (!eventId) return;
+    
     const socket = new SockJS(`${API_BASE}/ws`);
     stompClient = Stomp.over(socket);
+    
     stompClient.connect({}, () => {
-        console.log("WebSocket connected");
+        console.log("✅ WebSocket connected");
+        
         stompClient.subscribe('/topic/seats', (message) => {
             const updatedSeat = JSON.parse(message.body);
+            console.log("📡 Seat update:", updatedSeat.seatCode, updatedSeat.status);
+            
+            // Update seats array
             const idx = seats.findIndex(s => s.id === updatedSeat.id);
             if (idx !== -1) {
                 seats[idx] = updatedSeat;
                 renderSeatMap();
                 
+                // Handle cart updates
                 const cartIdx = cart.findIndex(c => c.id === updatedSeat.id);
-                if (cartIdx !== -1 && (updatedSeat.status === "SOLD" || updatedSeat.status === "AVAILABLE")) {
-                    if (cartTimers.has(updatedSeat.id)) {
-                        clearInterval(cartTimers.get(updatedSeat.id));
-                        cartTimers.delete(updatedSeat.id);
+                if (cartIdx !== -1) {
+                    if (updatedSeat.status === "AVAILABLE") {
+                        // Lock expired
+                        showToast(`⏰ Lock for seat ${updatedSeat.seatCode} has expired!`, "warning");
+                        stopCartTimer(updatedSeat.id);
+                        cart.splice(cartIdx, 1);
+                        saveCart();
+                        updateCartUI();
+                    } else if (updatedSeat.status === "SOLD") {
+                        // Seat purchased
+                        showToast(`🎫 Seat ${updatedSeat.seatCode} has been purchased!`, "info");
+                        stopCartTimer(updatedSeat.id);
+                        cart.splice(cartIdx, 1);
+                        saveCart();
+                        updateCartUI();
                     }
-                    cart.splice(cartIdx, 1);
-                    saveCart();
-                    updateCartUI();
-                    showToast(`Seat ${updatedSeat.seatCode} is no longer available!`, "error");
                 }
             }
         });
-    }, (err) => console.log("WebSocket error:", err));
+        
+    }, (err) => {
+        console.log("❌ WebSocket error:", err);
+        setTimeout(connectWebSocket, 5000);
+    });
 }
 
-// ==================== TIMER ====================
+// ==================== TIMER MANAGEMENT ====================
 function startCartTimer(seatId, lockedUntil, seatCode) {
-    if (cartTimers.has(seatId)) {
-        clearInterval(cartTimers.get(seatId));
-        cartTimers.delete(seatId);
-    }
+    stopCartTimer(seatId);
     
     const timer = setInterval(() => {
         const seatInCart = cart.find(s => s.id === seatId);
         if (!seatInCart) {
-            clearInterval(timer);
-            cartTimers.delete(seatId);
+            stopCartTimer(seatId);
             return;
         }
         
@@ -425,19 +456,26 @@ function startCartTimer(seatId, lockedUntil, seatCode) {
         updateCartUI();
         
         if (remaining <= 0) {
-            clearInterval(timer);
-            cartTimers.delete(seatId);
+            stopCartTimer(seatId);
             const idx = cart.findIndex(s => s.id === seatId);
             if (idx !== -1) {
                 cart.splice(idx, 1);
                 saveCart();
                 updateCartUI();
                 renderSeatMap();
-                showToast(`⏰ Seat ${seatCode} reservation expired!`, "error");
+                showToast(`⏰ Seat ${seatCode} reservation expired!`, "warning");
             }
         }
     }, 1000);
+    
     cartTimers.set(seatId, timer);
+}
+
+function stopCartTimer(seatId) {
+    if (cartTimers.has(seatId)) {
+        clearInterval(cartTimers.get(seatId));
+        cartTimers.delete(seatId);
+    }
 }
 
 function stopAllTimers() {
@@ -446,9 +484,26 @@ function stopAllTimers() {
 }
 
 // ==================== LOAD EVENT ====================
+function getFlagCode(teamName) {
+    const flagMap = {
+        'usa': 'us', 'mexico': 'mx', 'brazil': 'br', 'germany': 'de',
+        'argentina': 'ar', 'france': 'fr', 'england': 'gb-eng', 'spain': 'es',
+        'portugal': 'pt', 'netherlands': 'nl', 'italy': 'it', 'belgium': 'be',
+        'japan': 'jp', 'south-korea': 'kr', 'austria': 'at'
+    };
+    return flagMap[teamName?.toLowerCase()] || 'un';
+}
+
+function isComponentName(url) {
+    if (!url) return false;
+    return !url.includes('/') && !url.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+}
+
 async function loadEvent() {
     try {
-        const event = await fetch(`${API_BASE}/events/${eventId}`).then(r => r.json());
+        const response = await fetch(`${API_BASE}/events/${eventId}`);
+        if (!response.ok) throw new Error("Event not found");
+        const event = await response.json();
         
         const categoryNames = {
             'CONCERT': '🎵 Concert', 'SPORTS': '⚽ Sports', 'THEATRE': '🎭 Theatre',
@@ -460,7 +515,6 @@ async function loadEvent() {
         const isComponent = isComponentName(imageUrl);
         
         let imageHtml = '';
-        
         if (isComponent) {
             try {
                 const componentResponse = await fetch(`/matches/${imageUrl}.html`);
@@ -497,21 +551,80 @@ async function loadEvent() {
         await loadSeats();
     } catch(e) { 
         console.error(e);
-        document.getElementById("eventCard").innerHTML = '<div class="text-center text-danger py-5">Failed to load event</div>';
+        document.getElementById("eventCard").innerHTML = '<div class="text-center text-danger py-5"><i class="fas fa-exclamation-triangle fa-3x mb-3"></i><br>Failed to load event</div>';
     }
 }
 
+// ==================== LOAD SEATS ====================
 async function loadSeats() {
+    const container = document.getElementById("seatMap");
+    if (!container) return;
+    
+    container.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p class="mt-3">Loading seat map...</p></div>`;
+    
     try {
-        seats = await fetch(`${API_BASE}/seats/${eventId}`).then(r => r.json());
+        const response = await fetch(`${API_BASE}/seats/${eventId}`);
+        
+        if (response.status === 503) {
+            const error = await response.json();
+            console.warn("Rate limit exceeded:", error);
+            showRetryCountdown(10);
+            showToast("⚠️ System is busy. Please wait...", "warning");
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        seats = await response.json();
         renderSeatMap();
         loadCart();
-    } catch(e) { 
-        console.error(e);
-        document.getElementById("seatMap").innerHTML = '<div class="text-center text-danger py-5">Failed to load seat map</div>';
+        
+    } catch (error) {
+        console.error("Error loading seats:", error);
+        container.innerHTML = `
+            <div class="error-container">
+                <i class="fas fa-wifi fa-3x text-danger mb-3"></i>
+                <h5>Cannot load seat map</h5>
+                <p class="text-muted">${error.message}</p>
+                <button class="btn btn-primary" onclick="loadSeats()">
+                    <i class="fas fa-sync-alt me-2"></i> Retry
+                </button>
+            </div>
+        `;
     }
 }
 
+function showRetryCountdown(seconds) {
+    const container = document.getElementById("seatMap");
+    retryCountdown = seconds;
+    
+    if (countdownInterval) clearInterval(countdownInterval);
+    
+    countdownInterval = setInterval(() => {
+        if (retryCountdown <= 0) {
+            clearInterval(countdownInterval);
+            loadSeats();
+        } else {
+            if (container && !container.innerHTML.includes("retry-btn")) {
+                container.innerHTML = `
+                    <div class="error-container">
+                        <i class="fas fa-hourglass-half fa-3x text-warning mb-3"></i>
+                        <h5>System busy</h5>
+                        <p class="text-muted">Too many people are viewing seats. Please wait...</p>
+                        <button class="btn btn-warning" disabled style="opacity:0.7">
+                            <i class="fas fa-spinner fa-spin me-2"></i> Retry in ${retryCountdown}s
+                        </button>
+                    </div>
+                `;
+            }
+            retryCountdown--;
+        }
+    }, 1000);
+}
+
+// ==================== RENDER SEAT MAP ====================
 function renderSeatMap() {
     if (!seats.length) {
         document.getElementById("seatMap").innerHTML = '<div class="text-center text-muted py-5">No seats available</div>';
@@ -520,93 +633,94 @@ function renderSeatMap() {
     
     const rows = [...new Set(seats.map(s => s.rowIndex))].sort((a,b)=>a-b);
     let html = "";
+    
     rows.forEach(row => {
         const rowSeats = seats.filter(s => s.rowIndex === row).sort((a,b)=>a.colIndex-b.colIndex);
         html += `<div class="seat-row"><div class="row-label">${String.fromCharCode(64 + row)}</div>`;
+        
         rowSeats.forEach(seat => {
             const isVip = row <= vipRows;
             const inCart = cart.some(c => c.id === seat.id);
-            let cls = isVip ? "vip" : "available";
-            let icon = "<i class='fas fa-chair'></i>";
-            let canClick = true;
+            const isLockedByMe = seat.status === "LOCKED" && seat.lockedBy?.id === currentUser?.id;
+            const isLockedByOther = seat.status === "LOCKED" && !isLockedByMe;
             
-            if (inCart) {
-                cls = "locked";
-                icon = "<i class='fas fa-clock'></i>";
-                canClick = true;
-            }
-            else if (seat.status === "LOCKED") {
-                cls = "locked";
-                icon = "<i class='fas fa-clock'></i>";
-                canClick = false;
-            } 
-            else if (seat.status === "SOLD") {
+            let cls = "";
+            let icon = "<i class='fas fa-chair'></i>";
+            let canClick = false;
+            let title = `Seat ${seat.seatCode} - $${seat.price}`;
+            
+            if (seat.status === "SOLD") {
                 cls = "sold";
                 icon = "<i class='fas fa-times-circle'></i>";
                 canClick = false;
+                title += " (Sold)";
+            } else if (inCart || isLockedByMe) {
+                cls = "locked-by-me";
+                icon = "<i class='fas fa-user-clock'></i>";
+                canClick = true;
+                title += " (Your locked seat - Click to release)";
+            } else if (isLockedByOther) {
+                cls = "locked";
+                icon = "<i class='fas fa-clock'></i>";
+                canClick = false;
+                title += " (Locked by another user)";
+            } else if (seat.status === "AVAILABLE") {
+                cls = isVip ? "vip" : "available";
+                icon = "<i class='fas fa-chair'></i>";
+                canClick = true;
+                title += isVip ? " (VIP)" : "";
             }
             
             const onclick = canClick ? `onclick="handleSeatClick(${seat.id})"` : '';
-            html += `<div class="seat ${cls}" ${onclick} title="Seat ${String.fromCharCode(64+row)}-${seat.colIndex} - $${seat.price} ${isVip ? '(VIP)' : ''}">
-                        <i class="${cls === 'sold' ? 'fas fa-times-circle' : (cls === 'locked' ? 'fas fa-clock' : 'fas fa-chair')}"></i>
+            html += `<div class="seat ${cls}" ${onclick} title="${title}">
+                        ${icon}
                         <span>${seat.colIndex}</span>
                     </div>`;
         });
         html += `</div>`;
     });
+    
     document.getElementById("seatMap").innerHTML = html;
 }
 
-// ==================== CART ====================
-function saveCart() {
-    sessionStorage.setItem(CART_KEY, JSON.stringify(cart));
-}
-
-function loadCart() {
-    const saved = sessionStorage.getItem(CART_KEY);
-    if (saved) {
-        try { 
-            cart = JSON.parse(saved);
-            cart.forEach(seat => {
-                if (seat.lockedUntil && new Date(seat.lockedUntil) > new Date()) {
-                    startCartTimer(seat.id, seat.lockedUntil, seat.seatCode);
-                }
-            });
-            updateCartUI();
-            renderSeatMap();
-        } catch(e) { cart = []; }
-    }
-}
-
+// ==================== SEAT ACTIONS ====================
 async function handleSeatClick(seatId) {
-    if (!currentUser) { showToast("Please login first!", "error"); return; }
-    if (!eventId) { showToast("Invalid event!", "error"); return; }
+    if (!currentUser) { 
+        showToast("Please login first!", "error"); 
+        setTimeout(() => window.location.href = "login.html", 1500);
+        return; 
+    }
     
     const seat = seats.find(s => s.id === seatId);
     if (!seat) return;
     
-    const existing = cart.find(c => c.id === seatId);
-    if (existing) {
-        if (cartTimers.has(seatId)) {
-            clearInterval(cartTimers.get(seatId));
-            cartTimers.delete(seatId);
-        }
-        cart = cart.filter(c => c.id !== seatId);
-        saveCart();
-        updateCartUI();
-        renderSeatMap();
-        showToast(`Removed seat ${seat.seatCode} from cart`, "info");
+    // Check if seat is already in cart (locked by me)
+    const existingInCart = cart.find(c => c.id === seatId);
+    if (existingInCart) {
+        // Release the seat instead of removing from cart
+        await releaseSeat(seatId);
         return;
     }
     
-    if (seat.status === "SOLD") { showToast("Seat already sold!", "error"); return; }
-    if (seat.status === "LOCKED") {
-        if (seat.lockedBy?.id !== currentUser.id) {
-            showToast("Seat is held by another user!", "error"); 
-            return;
-        }
+    // Check if seat is locked by me but not in cart (sync issue)
+    if (seat.status === "LOCKED" && seat.lockedBy?.id === currentUser.id) {
+        await releaseSeat(seatId);
+        return;
     }
     
+    // Cannot lock sold seats
+    if (seat.status === "SOLD") { 
+        showToast(`Seat ${seat.seatCode} is already sold!`, "error"); 
+        return; 
+    }
+    
+    // Cannot lock seats locked by others
+    if (seat.status === "LOCKED") {
+        showToast(`Seat ${seat.seatCode} is held by another user!`, "error"); 
+        return;
+    }
+    
+    // Lock the seat
     try {
         const response = await fetch(`${API_BASE}/seats/lock`, {
             method: "POST",
@@ -615,12 +729,13 @@ async function handleSeatClick(seatId) {
         });
         
         if (!response.ok) {
-            const error = await response.text();
-            throw new Error(error);
+            const error = await response.json();
+            throw new Error(error.error || "Failed to lock seat");
         }
         
         const lockedSeat = await response.json();
         
+        // Add to cart
         cart.push({
             id: seat.id,
             row: seat.rowIndex,
@@ -639,11 +754,64 @@ async function handleSeatClick(seatId) {
         
         updateCartUI();
         await loadSeats();
-        
-        showToast(`✅ Seat ${seat.seatCode} locked! 5 min to checkout.`, "success");
+        showToast(`✅ Seat ${seat.seatCode} locked! You have 5 minutes to checkout.`, "success");
         
     } catch(e) {
         showToast(e.message || "Failed to lock seat!", "error");
+    }
+}
+
+async function releaseSeat(seatId) {
+    if (!currentUser) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/seats/release`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ seatId: seatId, userId: currentUser.id })
+        });
+        
+        if (response.ok) {
+            const idx = cart.findIndex(c => c.id === seatId);
+            if (idx !== -1) {
+                stopCartTimer(seatId);
+                cart.splice(idx, 1);
+                saveCart();
+                updateCartUI();
+            }
+            
+            await loadSeats();
+            const seat = seats.find(s => s.id === seatId);
+            showToast(`🔓 Released seat ${seat?.seatCode || seatId}`, "info");
+        } else {
+            const error = await response.json();
+            throw new Error(error.error || "Failed to release seat");
+        }
+    } catch(e) {
+        showToast(e.message, "error");
+    }
+}
+
+// ==================== CART MANAGEMENT ====================
+function saveCart() {
+    sessionStorage.setItem(CART_KEY, JSON.stringify(cart));
+}
+
+function loadCart() {
+    const saved = sessionStorage.getItem(CART_KEY);
+    if (saved) {
+        try { 
+            cart = JSON.parse(saved);
+            cart.forEach(seat => {
+                if (seat.lockedUntil && new Date(seat.lockedUntil) > new Date()) {
+                    startCartTimer(seat.id, seat.lockedUntil, seat.seatCode);
+                }
+            });
+            updateCartUI();
+            renderSeatMap();
+        } catch(e) { 
+            cart = []; 
+        }
     }
 }
 
@@ -675,6 +843,7 @@ function updateCartUI() {
     
     let html = "", subtotal = 0;
     const now = Date.now();
+    
     cart.forEach((item, idx) => {
         subtotal += item.price;
         let timerHtml = "";
@@ -682,41 +851,31 @@ function updateCartUI() {
             const remaining = Math.max(0, Math.floor((new Date(item.lockedUntil) - now) / 1000));
             const mins = Math.floor(remaining / 60);
             const secs = remaining % 60;
-            timerHtml = `<div class="cart-timer"><i class="fas fa-hourglass-half"></i> ${mins}:${secs.toString().padStart(2,'0')}</div>`;
+            const timeColor = remaining < 30 ? "text-danger fw-bold" : "";
+            timerHtml = `<div class="cart-timer ${timeColor}"><i class="fas fa-hourglass-half"></i> ${mins}:${secs.toString().padStart(2,'0')} remaining</div>`;
         }
         html += `<div class="cart-item">
             <div class="cart-item-info">
-                <div class="cart-item-seat">🎫 Seat ${item.seatCode} ${item.isVip ? '<span class="badge bg-warning text-dark">VIP</span>' : ''}</div>
+                <div class="cart-item-seat">🎫 Seat ${item.seatCode} ${item.isVip ? '<span class="badge bg-warning text-dark ms-1">VIP</span>' : ''}</div>
                 ${timerHtml}
             </div>
             <div class="cart-item-price">$${item.price}</div>
             <div class="cart-item-actions">
-                <button onclick="removeFromCart(${idx})"><i class="fas fa-trash-alt"></i></button>
+                <button onclick="releaseSeat(${item.id})" title="Release seat"><i class="fas fa-unlock-alt"></i></button>
             </div>
         </div>`;
     });
     
     const fee = subtotal * 0.1;
+    const total = subtotal + fee;
+    
     container.innerHTML = html;
     if (clearBtn) clearBtn.style.display = "block";
     if (checkoutBtn) checkoutBtn.disabled = false;
     if (cartCountSpan) cartCountSpan.innerText = cart.length;
     if (subtotalSpan) subtotalSpan.innerText = `$${subtotal.toFixed(2)}`;
     if (serviceFeeSpan) serviceFeeSpan.innerText = `$${fee.toFixed(2)}`;
-    if (grandTotalSpan) grandTotalSpan.innerText = `$${(subtotal + fee).toFixed(2)}`;
-}
-
-function removeFromCart(idx) {
-    const seat = cart[idx];
-    if (cartTimers.has(seat.id)) {
-        clearInterval(cartTimers.get(seat.id));
-        cartTimers.delete(seat.id);
-    }
-    cart.splice(idx, 1);
-    saveCart();
-    updateCartUI();
-    renderSeatMap();
-    showToast(`Removed ${seat.seatCode} from cart`, "info");
+    if (grandTotalSpan) grandTotalSpan.innerText = `$${total.toFixed(2)}`;
 }
 
 function clearCart() {
@@ -726,7 +885,7 @@ function clearCart() {
         cart = [];
         saveCart();
         updateCartUI();
-        renderSeatMap();
+        loadSeats();
         showToast("Cart cleared", "info");
     }
 }
@@ -743,6 +902,7 @@ function processCheckout() {
         return; 
     }
     
+    // Save cart to session for checkout page
     sessionStorage.setItem("checkoutCart", JSON.stringify(cart));
     window.location.href = `checkout.html?eventId=${eventId}`;
 }
@@ -752,7 +912,7 @@ function clearCartAfterPayment() {
     cart = [];
     saveCart();
     updateCartUI();
-    renderSeatMap();
+    loadSeats();
     showToast("Payment completed! Your cart has been cleared.", "success");
 }
 
@@ -763,6 +923,19 @@ function checkPaymentSuccess() {
         clearCartAfterPayment();
     }
 }
+
+// ==================== INITIALIZATION ====================
+window.addEventListener("DOMContentLoaded", () => {
+    loadUser();
+    loadEvent();
+    connectWebSocket();
+    checkPaymentSuccess();
+});
+
+window.addEventListener("beforeunload", () => {
+    stopAllTimers();
+    if (countdownInterval) clearInterval(countdownInterval);
+});
 
 window.addEventListener("storage", (e) => {
     if (e.key === "payment_success" && e.newValue === "true") {
@@ -775,27 +948,6 @@ document.addEventListener("visibilitychange", () => {
         checkPaymentSuccess();
         loadSeats();
     }
-});
-
-function showToast(msg, type) {
-    const toast = document.createElement("div");
-    toast.className = "toast-notification";
-    toast.style.background = type === "error" ? "#dc3545" : "#0d5bd7";
-    toast.innerHTML = `<i class="fas ${type === 'error' ? 'fa-exclamation-triangle' : 'fa-check-circle'} me-2"></i>${msg}`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2500);
-}
-
-// ==================== INIT ====================
-window.addEventListener("DOMContentLoaded", () => {
-    loadUser();
-    loadEvent();
-    connectWebSocket();
-    checkPaymentSuccess();
-});
-
-window.addEventListener("beforeunload", () => {
-    stopAllTimers();
 });
 </script>
 </body>

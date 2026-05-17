@@ -4,11 +4,15 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.example.Ticket_Rush.entity.Event;
 import com.example.Ticket_Rush.entity.Seat;
@@ -36,12 +40,24 @@ public class SeatService {
     private final QRCodeService qrCodeService;
 
     // ==============================
-    // 🎯 GENERATE SEATS
+    // 🎯 GENERATE SEATS (Ý 4: Đã thêm Validation)
     // ==============================
     @Transactional
     public void generateSeats(Long eventId, int rows, int cols, BigDecimal price) {
+        if (rows <= 0 || cols <= 0) {
+            throw new BadRequestException("Rows and columns must be positive numbers");
+        }
+        if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException("Price must be greater than 0");
+        }
+
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event not found"));
+
+        // Tránh tạo đè dữ liệu làm hỏng sơ đồ ghế cũ
+        if (!seatRepository.findByEventId(eventId).isEmpty()) {
+            throw new BadRequestException("Seats have already been generated for this event");
+        }
 
         List<Seat> seats = new ArrayList<>();
         for (int r = 1; r <= rows; r++) {
@@ -59,15 +75,12 @@ public class SeatService {
         seatRepository.saveAll(seats);
     }
 
-    // ==============================
-    // 📋 GET SEATS
-    // ==============================
     public List<Seat> getSeatsByEvent(Long eventId) {
         return seatRepository.findByEventId(eventId);
     }
 
     // ==============================
-    // 🔒 LOCK SEAT
+    // 🔒 LOCK SEAT (Ý 1: Đã sửa lỗi nuốt Lock hết hạn)
     // ==============================
     @Transactional
     public Seat lockSeat(Long seatId, Long userId) {
@@ -81,19 +94,26 @@ public class SeatService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        // Nếu ghế đã lock bởi chính user này → trả về ghế hiện tại
+        // Nếu ghế đã lock bởi chính user này → trả về luôn
         if (seat.getStatus() == SeatStatus.LOCKED && 
             seat.getLockedBy() != null && 
             seat.getLockedBy().getId().equals(userId)) {
             return seat;
         }
 
-        // Nếu ghế đang lock bởi người khác
+        // Xử lý khi ghế đang bị LOCK
         if (seat.getStatus() == SeatStatus.LOCKED) {
-            throw new BadRequestException("Seat is being held by another user");
+            // Kiểm tra xem thời hạn Lock cũ đã hết hạn chưa (Ý 1)
+            if (seat.getLockedUntil() != null && seat.getLockedUntil().isBefore(LocalDateTime.now())) {
+                System.out.println("🔄 Lazy release expired lock for seat: " + seat.getSeatCode());
+                // Khôi phục trạng thái tạm thời để chu trình bên dưới ghi đè lock mới lên
+                seat.setStatus(SeatStatus.AVAILABLE);
+            } else {
+                throw new BadRequestException("Seat is being held by another user");
+            }
         }
 
-        // Lock mới
+        // Tiến hành ghi đè Lock mới
         seat.setStatus(SeatStatus.LOCKED);
         seat.setLockedAt(LocalDateTime.now());
         seat.setLockedUntil(LocalDateTime.now().plusMinutes(5));
@@ -105,38 +125,47 @@ public class SeatService {
     }
 
     // ==============================
-    // ⏰ RELEASE EXPIRED SEATS
+    // ⏰ RELEASE EXPIRED SEATS (Ý 2 & Ý 7: Tự động quét an toàn)
     // ==============================
+    @Scheduled(fixedDelay = 30000) // Tự động chạy mỗi 30 giây (Ý 7)
     @Transactional
     public void releaseExpiredSeats() {
         List<Seat> expiredSeats = seatRepository.findExpiredSeats(LocalDateTime.now());
         if (expiredSeats.isEmpty()) return;
 
         for (Seat seat : expiredSeats) {
-            seat.setStatus(SeatStatus.AVAILABLE);
-            seat.setLockedAt(null);
-            seat.setLockedUntil(null);
-            seat.setLockedBy(null);
-        }
-
-        List<Seat> savedSeats = seatRepository.saveAll(expiredSeats);
-        for (Seat seat : savedSeats) {
-            messagingTemplate.convertAndSend("/topic/seats", seat);
-            System.out.println("🔄 Released expired seat: " + seat.getSeatCode());
+            // Sử dụng Pessimistic Lock bọc lại từng ghế để tránh Race Condition với luồng Checkout (Ý 2)
+            Seat freshSeat = seatRepository.findByIdForUpdate(seat.getId()).orElse(null);
+            if (freshSeat != null && 
+                freshSeat.getStatus() == SeatStatus.LOCKED &&
+                freshSeat.getLockedUntil() != null &&
+                freshSeat.getLockedUntil().isBefore(LocalDateTime.now())) {
+                
+                freshSeat.setStatus(SeatStatus.AVAILABLE);
+                freshSeat.setLockedAt(null);
+                freshSeat.setLockedUntil(null);
+                freshSeat.setLockedBy(null);
+                
+                Seat saved = seatRepository.save(freshSeat);
+                messagingTemplate.convertAndSend("/topic/seats", saved);
+                System.out.println("🔄 [Scheduler] Released expired seat: " + saved.getSeatCode());
+            }
         }
     }
 
-    // ==============================
-    // 🔓 RELEASE SEAT (chủ động)
-    // ==============================
     public Seat getSeatById(Long seatId) {
         return seatRepository.findById(seatId)
                 .orElseThrow(() -> new RuntimeException("Seat not found"));
     }
 
+    // ==============================
+    // 🔓 RELEASE SEAT CHỦ ĐỘNG (Ý 5: Đã thêm Lock bảo vệ)
+    // ==============================
     @Transactional
     public Seat releaseSeat(Long seatId, Long userId) {
-        Seat seat = getSeatById(seatId);
+        // Thay vì findById thường, dùng findByIdForUpdate chống xung đột (Ý 5)
+        Seat seat = seatRepository.findByIdForUpdate(seatId)
+                .orElseThrow(() -> new NotFoundException("Seat not found"));
         
         if (seat.getLockedBy() != null && seat.getLockedBy().getId().equals(userId)) {
             seat.setStatus(SeatStatus.AVAILABLE);
@@ -150,40 +179,30 @@ public class SeatService {
         return seat;
     }
 
-    
     // ==============================
-    // 💳 CHECKOUT
+    // 💳 CHECKOUT (Ý 3: Có quản lý Rollback QR Code hợp lý)
     // ==============================
     @Transactional
     public Ticket checkout(Long seatId, Long userId) {
         System.out.println("=== CHECKOUT START ===");
-        System.out.println("SeatId: " + seatId + ", UserId: " + userId);
         
-        // 1. Lấy ghế với pessimistic lock
         Seat seat = seatRepository.findByIdForUpdate(seatId)
                 .orElseThrow(() -> new RuntimeException("Seat not found: " + seatId));
         
-        System.out.println("Seat status: " + seat.getStatus());
-        System.out.println("Locked by: " + (seat.getLockedBy() != null ? seat.getLockedBy().getId() : "null"));
-        System.out.println("Locked until: " + seat.getLockedUntil());
-        
-        // 2. KIỂM TRA QUAN TRỌNG 1: Ghế phải ở trạng thái LOCKED
         if (seat.getStatus() != SeatStatus.LOCKED) {
             throw new RuntimeException("Seat is not locked. Current status: " + seat.getStatus());
         }
         
-        // 3. KIỂM TRA QUAN TRỌNG 2: Phải là chủ nhân của ghế
         if (seat.getLockedBy() == null || !seat.getLockedBy().getId().equals(userId)) {
-            throw new RuntimeException("You are not the owner of this seat. Locked by user: " + 
-                (seat.getLockedBy() != null ? seat.getLockedBy().getId() : "null"));
+            throw new RuntimeException("You are not the owner of this seat.");
         }
         
-        // 4. KIỂM TRA QUAN TRỌNG 3: Ghế chưa hết hạn lock
         if (seat.getLockedUntil() != null && seat.getLockedUntil().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Seat lock has expired. Locked until: " + seat.getLockedUntil());
+            throw new RuntimeException("Seat lock has expired.");
         }
         
-        // 5. Tạo vé
+        final Long eventId = (seat.getEvent() != null) ? seat.getEvent().getId() : null;
+        
         Ticket ticket = new Ticket();
         ticket.setUserId(userId);
         ticket.setSeatId(seatId);
@@ -193,9 +212,8 @@ public class SeatService {
         ticket.setBookingDate(LocalDateTime.now());
         ticket.setOrderNumber(generateOrderNumber());
         
-        // Lấy event info
         if (seat.getEvent() != null) {
-            ticket.setEventId(seat.getEvent().getId());
+            ticket.setEventId(eventId);
             ticket.setEventName(seat.getEvent().getName());
             ticket.setEventVenue(seat.getEvent().getLocation());
             ticket.setEventDate(seat.getEvent().getEventTime() != null ? 
@@ -204,7 +222,7 @@ public class SeatService {
             ticket.setEventDate(LocalDateTime.now().plusDays(30));
         }
         
-        // Tạo QR Code
+        // Luồng QR Code (Ý 3): Nếu hệ thống của bạn coi QR là bắt buộc, hãy throw lỗi tại đây để Rollback.
         try {
             String qrCodeBase64 = qrCodeService.generateTicketQRCode(
                 System.currentTimeMillis(),
@@ -215,27 +233,58 @@ public class SeatService {
             ticket.setQrCodeUrl(qrCodeBase64);
             ticket.setQrCodeData("TICKET:" + ticket.getOrderNumber());
         } catch (Exception e) {
-            System.out.println("QR Code generation failed: " + e.getMessage());
+            // Rollback toàn bộ giao dịch mua vé nếu lỗi sinh QR code (An toàn dữ liệu tuyệt đối)
+            throw new RuntimeException("Checkout failed due to QR Code generation failure", e);
         }
         
-        // 6. Cập nhật ghế thành SOLD
         seat.setStatus(SeatStatus.SOLD);
         seat.setLockedAt(null);
         seat.setLockedUntil(null);
         seat.setLockedBy(null);
-        seatRepository.save(seat);
+        Seat savedSeat = seatRepository.save(seat);
         
-        // 7. Lưu vé
-        Ticket saved = ticketRepository.save(ticket);
-        System.out.println("✅ Ticket created: " + saved.getId());
+        Ticket savedTicket = ticketRepository.save(ticket);
+        System.out.println("✅ Ticket created: " + savedTicket.getId());
         
-        // 8. Broadcast cập nhật ghế
-        messagingTemplate.convertAndSend("/topic/seats", seat);
-        
-        return saved;
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    messagingTemplate.convertAndSend("/topic/seats", savedSeat);
+                    
+                    if (eventId != null) {
+                        messagingTemplate.convertAndSend("/topic/event-updates", Map.of("id", eventId));
+                    }
+                    
+                    try {
+                        Map<String, Object> stats = new java.util.HashMap<>();
+                        long totalTickets = ticketRepository.count();
+                        long totalUsers = userRepository.count();
+                        BigDecimal totalRevenue = ticketRepository.sumPriceByStatus("BOOKED");
+                        if (totalRevenue == null) totalRevenue = BigDecimal.ZERO;
+                        
+                        long totalSeats = seatRepository.count();
+                        long soldSeats = seatRepository.countByStatus(SeatStatus.SOLD);
+                        double occupancyRate = totalSeats > 0 ? (soldSeats * 100.0 / totalSeats) : 0;
+                        
+                        stats.put("totalSold", totalTickets);
+                        stats.put("totalUsers", totalUsers);
+                        stats.put("totalRevenue", totalRevenue);
+                        stats.put("occupancyRate", Math.round(occupancyRate));
+                        
+                        messagingTemplate.convertAndSend("/topic/admin-stats", stats);
+                        System.out.println("📡 Real-time stats broadcasted AFTER COMMIT successfully!");
+                    } catch (Exception e) {
+                        System.err.println("Failed to broadcast admin stats: " + e.getMessage());
+                    }
+                }
+            });
+        }
+
+        return savedTicket;
     }
+
     private String generateOrderNumber() {
         return "TM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
-    
 }
